@@ -86,6 +86,8 @@ class AveragePointVisit(object):
         """
 
         self._step = (self._step + 1) % self._MAX_STEP
+        print ''
+        print "Step:%s" % self._step
 
         step = self._step % self._live_len
         temp = [i for i in self._live_num]
@@ -102,6 +104,7 @@ class AveragePointVisit(object):
         if self.is_check_fail():
             fail_point = self.get_fail_points()
             if fail_point:
+                print"尝试恢复%s" % fail_point.name
                 if self.is_point_fail(fail_point):
                     self.recover_fail(fail_point)
                     return fail_point, 0
@@ -188,6 +191,9 @@ class AveragePointVisit(object):
 
     def fail_point(self, point):
         print "剔除point%s" % point.name
+        print self._points_visit[point]
+        print self._points_back[point]
+
         self._fail.add(point)
         self._live.remove(point)
         self._live_points.remove(point)
@@ -206,6 +212,7 @@ class AveragePointVisit(object):
     def recover_fail(self, point):
         """恢复point
         """
+        print "恢复：%s" % point.name
         self._fail.remove(point)
         self._live.add(point)
         self._live_points.append(point)
