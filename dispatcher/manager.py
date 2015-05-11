@@ -1,6 +1,5 @@
 # coding: utf-8
 
-
 import time
 
 
@@ -18,7 +17,7 @@ class AveragePointVisit(object):
         5. 问题节点的剔除和恢复
     """
 
-    def __init__(self, points, vl=100, el=1, wn=4, bt=1, ct=None, cc=None, rn=1):
+    def __init__(self, points, vl=100, el=1, wn=4, bt=2, ct=None, cc=None, rn=1):
         """ 初始化必要的数据
 
         管理所有的节点point，一个管理类的节点一次性创建，后期不提供删减point，
@@ -60,10 +59,8 @@ class AveragePointVisit(object):
 
         self._recovery_by_time = bool(self._ct)
 
-
-
         livenum = 0
-        for k, v in points.iteritem():
+        for k, v in points.iteritems():
             self._point[k] = v
             self._points_visit[k] = []
             self._points_back[k] = []
@@ -96,18 +93,21 @@ class AveragePointVisit(object):
         temp.sort()
         live_index = temp.index(step)
         point = self._live_points[live_index]
+
         self.check_point(point)
 
         if only_live:
             return point, 0
 
         if self.is_check_fail():
-            point = self.get_fail_points()
-            if self.is_point_fail(point):
-                self.recover_fail(point)
-                return point, 0
-            else:
-                return point, 1
+            fail_point = self.get_fail_points()
+            if fail_point:
+                if self.is_point_fail(fail_point):
+                    self.recover_fail(fail_point)
+                    return fail_point, 0
+                else:
+                    return fail_point, 1
+        return point, 0
 
     def is_check_fail(self):
         """判断是否检测fail的point
@@ -128,7 +128,8 @@ class AveragePointVisit(object):
     def get_fail_points(self):
         """返回失败的节点
         """
-        self._step = (self._step + 1) % self._MAX_STEP
+        if not self._fail:
+            return None
         fail_points = list(self._fail)
         i = self._step % len(fail_points)
         return fail_points[i]
@@ -151,7 +152,6 @@ class AveragePointVisit(object):
             num: 测试返回时间的个数
         """
         _num = num if 0 < num < self._el else self._el
-        _num = _num if _num < len(self._points_back[point]) else len(self._points_back[point])
 
         for index in range(_num):
             i = 1 + index
@@ -184,9 +184,10 @@ class AveragePointVisit(object):
             if vt <= point_back:
                 best_last_visit_time = vt  # 第一个小于point_back的时间假设为找到最可能的visit_time
                 break
-        return (best_last_visit_time + self._bt) > end_point_visit
+        return (best_last_visit_time + self._bt) < end_point_visit
 
     def fail_point(self, point):
+        print "剔除point%s" % point.name
         self._fail.add(point)
         self._live.remove(point)
         self._live_points.remove(point)
@@ -195,6 +196,9 @@ class AveragePointVisit(object):
         for p in self._live_points:
             temp = temp + self._point[p]
             self._live_num.append(temp)
+
+        if not self._live_num:
+            raise AveragePointException("所有的节点均不可用")
         self._live_len = self._live_num[-1]
         if self._live_len > self._MAX_STEP:
             raise AveragePointException("权重总数需要小于 %d" % self._MAX_STEP)
@@ -228,7 +232,7 @@ class AveragePointVisit(object):
         记录point的返回时间
         """
         self._points_back[point].append(int(time.time()))
-        if len(self._points_back[point]) > self.el:
+        if len(self._points_back[point]) > self._el:
             del self._points_back[point][0]
 
 
