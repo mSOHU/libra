@@ -1,7 +1,10 @@
 # coding: utf-8
 
+import logging
+import random
 import time
 
+logger = logging.getLogger(__name__)
 
 class AveragePointException(Exception):
     pass
@@ -243,7 +246,55 @@ class AveragePointVisit(object):
             del self._points_back[point][0]
 
 
+class WeightNodes(object):
+    """按权重返回node
+    """
 
+    def __init__(self, weight_table):
+        """
+        Args:
+            weight_table: 字典类型，权重对应表
+        """
+        self._step = 0
+        self._MAX_STEP = 1000000000
+        self._weight_node = {}
+        self._live_nodes = []
+        self._live = set()
+        self._fail = set()
+
+        for k, v in weight_table.iteritems():
+            self._weight_node[k] = v
+            self._live.add(k)
+            self._live_nodes += [k] * v
+
+        self._live_len = len(self._live_nodes)
+
+    def get_node(self):
+        self._step = (self._step + 1) % self._MAX_STEP
+        if not self._live_nodes:
+            return random.choice(list(self._fail))  # 如果self._fail为空会失败哦，应该不会失败
+        step = self._step % self._live_len
+        node = self._live_nodes[step]
+        return node
+
+    def release_node(self, node):
+        if node in self._fail:
+            self._fail.remove(node)
+            self._live.add(node)
+            v = self._weight_node[node]
+            self._live_nodes += [node] * v
+            self._live_len = len(self._live_nodes)
+            logger.info('恢复node:%s' % node)
+
+    def dead_node(self, node):
+        self._fail.add(node)
+        self._live.remove(node)
+        self._live_nodes = filter(lambda x: x != node, self._live_nodes)
+        self._live_len = len(self._live_nodes)
+        logger.info('剔除node:%s' % node)
+
+        if not self._live_nodes:
+            logger.warning("所有节点都失败了，请立刻检测")
 
 
 
