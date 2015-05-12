@@ -5,7 +5,7 @@
 """
 import random
 import time
-from dispatcher.manager import AveragePointVisit
+from libra.manager import AveragePointVisit
 
 
 
@@ -17,8 +17,6 @@ class Server():
             p：服务器失败的概率
 
         """
-
-
         self._point = name
         self._probability = p
         self._LAST_FAIL_NUM = 15
@@ -26,7 +24,7 @@ class Server():
         self._is_fail = False
 
     def request(self):
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
         if self._is_fail:
             print self._point, 'fail'
@@ -60,7 +58,7 @@ def main():
     TableManger = AveragePointVisit(TableServer, bt=2, el=2, ct=1, cc=10, rn=2)
 
     for i in range(10000000):
-        if i%100 == 0:
+        if i % 100 == 0:
             time.sleep(1)
         serv, status = TableManger.get_points()
 
