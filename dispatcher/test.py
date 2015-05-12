@@ -50,14 +50,14 @@ class Server():
 
 def main():
     TableServer = {
-        Server('A', 0.5): 60,
-        Server('B', 0): 10,
-        Server('C', 0.5): 10,
-        Server('D', 0.2): 5,
-        Server('E', 0.3): 15,
+        Server('A', 0.5): 20,
+        Server('B', 0): 20,
+        Server('C', 0.5): 20,
+        Server('D', 0.2): 20,
+        Server('E', 0.3): 20,
     }
 
-    TableManger = AveragePointVisit(TableServer, bt=2, cc=10)
+    TableManger = AveragePointVisit(TableServer, bt=2, el=2, ct=1, cc=10, rn=2)
 
     for i in range(10000000):
         if i%100 == 0:

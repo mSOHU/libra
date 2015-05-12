@@ -122,7 +122,7 @@ class AveragePointVisit(object):
         """
         if self._ct:
             now = int(time.time())
-            return bool(now % (self.ct + 1) == 0)
+            return bool(now % (self._ct + 1) == 0)
         elif self._cc:
             return bool(self._step % self._cc == 0)
         else:
