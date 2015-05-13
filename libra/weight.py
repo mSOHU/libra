@@ -24,6 +24,7 @@ DEFAULT_WEIGHT_MAP = {
 
     ('192.168', '10.16'): 1,
 }
+SAME_SECTION_WEIGHT = 100
 
 # same IP section       100
 # same IP section 2     60
@@ -44,16 +45,16 @@ def ip_section(ip, depth=2):
     return '.'.join(ip.split('.')[:depth])
 
 
-def calc_weight(local_ip, remote_nodes, same_section_weight=100, section_depth=2, weight_map=DEFAULT_WEIGHT_MAP):
+def calc_weight(local_ip, remote_nodes, section_depth=2, weight_map=DEFAULT_WEIGHT_MAP):
     weight_map = bidirection_dict(weight_map)
 
     def _weight(node_ip):
-        for depth in range(section_depth, 1, -1):
+        for depth in range(section_depth, 0, -1):
             try:
                 return weight_map[ip_section(local_ip, depth), ip_section(node_ip, depth)]
             except KeyError:
                 if ip_section(local_ip, depth) == ip_section(node_ip, depth):
-                    return same_section_weight
+                    return SAME_SECTION_WEIGHT
 
                 continue
         else:
