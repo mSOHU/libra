@@ -250,7 +250,7 @@ class WeightNodes(object):
     """按权重返回node
     """
 
-    def __init__(self, weight_table):
+    def __init__(self, weight_table, recovery_num=1000):
         """
         Args:
             weight_table: 字典类型，权重对应表
@@ -261,6 +261,7 @@ class WeightNodes(object):
         self._live_nodes = []
         self._live = set()
         self._fail = set()
+        self._recovery_num = recovery_num
 
         self._node_counter = {}
 
@@ -279,6 +280,11 @@ class WeightNodes(object):
 
     def get_node(self):
         self._step = (self._step + 1) % self._MAX_STEP
+
+        # 重试机制
+        if self._fail and self._step % self._recovery_num == 0:
+            return random.choice(list(self._fail))
+
         if not self._live_nodes:
             return random.choice(list(self._fail))  # 如果self._fail为空会失败哦，应该不会失败
         step = self._step % self._live_len
