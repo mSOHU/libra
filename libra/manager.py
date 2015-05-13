@@ -283,10 +283,16 @@ class WeightNodes(object):
 
         # 重试机制
         if self._fail and self._step % self._recovery_num == 0:
-            return random.choice(list(self._fail))
+            node = random.choice(list(self._fail))
+            self._node_counter[node]['get'] += 1
+            return node
 
+        # 节点全失效时的处理
         if not self._live_nodes:
-            return random.choice(list(self._fail))  # 如果self._fail为空会失败哦，应该不会失败
+            node = random.choice(list(self._fail))  # 如果self._fail为空会失败哦，应该不会失败
+            self._node_counter[node]['get'] += 1
+            return node
+
         step = self._step % self._live_len
         node = self._live_nodes[step]
         self._node_counter[node]['get'] += 1
