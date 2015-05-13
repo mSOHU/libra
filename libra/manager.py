@@ -262,15 +262,17 @@ class WeightNodes(object):
         self._live = set()
         self._fail = set()
 
-        self._dc_success_count = {}
-        self._dc_failure_count = {}
+        self._node_counter = {}
 
         for k, v in weight_table.iteritems():
             self._weight_node[k] = v
             self._live.add(k)
             self._live_nodes += [k] * v
-            self._dc_success_count[k] = 0
-            self._dc_failure_count[k] = 0
+            self._node_counter[k] = {
+                'get': 0,
+                'release': 0,
+                'dead': 0,
+            }
 
         self._live_len = len(self._live_nodes)
         random.shuffle(self._live_nodes)
@@ -281,7 +283,7 @@ class WeightNodes(object):
             return random.choice(list(self._fail))  # 如果self._fail为空会失败哦，应该不会失败
         step = self._step % self._live_len
         node = self._live_nodes[step]
-        self._dc_success_count[node] += 1
+        self._node_counter[node]['get'] += 1
         return node
 
     def release_node(self, node):
@@ -293,6 +295,7 @@ class WeightNodes(object):
             self._live_len = len(self._live_nodes)
             random.shuffle(self._live_nodes)
             logger.info('恢复node:%s' % node)
+        self._node_counter[node]['release'] += 1
 
     def dead_node(self, node):
         self._fail.add(node)
@@ -300,11 +303,14 @@ class WeightNodes(object):
         self._live_nodes = filter(lambda x: x != node, self._live_nodes)
         self._live_len = len(self._live_nodes)
         random.shuffle(self._live_nodes)
-        self._dc_failure_count[node] += 1
+        self._node_counter[node]['dead'] += 1
         logger.info('剔除node:%s' % node)
 
         if not self._live_nodes:
             logger.warning("所有节点都失败了，请立刻检测")
+
+    def get_node_counter(self):
+        return self._node_counter
 
 
 
