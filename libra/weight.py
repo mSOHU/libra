@@ -24,6 +24,9 @@ DEFAULT_WEIGHT_MAP = {
 
     ('192.168', '10.16'): 1,
 }
+DEFAULT_DIRECTIONAL_WEIGHT = {
+    ('10.16.19', '10.13.82'): 40,
+}
 SAME_SECTION_WEIGHT = 100
 
 # same IP section       100
@@ -45,8 +48,11 @@ def ip_section(ip, depth=2):
     return '.'.join(ip.split('.')[:depth])
 
 
-def calc_weight(local_ip, remote_nodes, section_depth=2, weight_map=DEFAULT_WEIGHT_MAP):
+def calc_weight(local_ip, remote_nodes, section_depth=3,
+                weight_map=DEFAULT_WEIGHT_MAP,
+                directional_weight=DEFAULT_DIRECTIONAL_WEIGHT):
     weight_map = bidirection_dict(weight_map)
+    weight_map.update(directional_weight)
 
     def _weight(node_ip):
         for depth in range(section_depth, 0, -1):
