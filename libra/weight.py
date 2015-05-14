@@ -5,13 +5,7 @@ __author__ = 'johnxu'
 __date__ = '2015/5/12 16:09'
 
 
-SAME_SECTION_WEIGHT = 100
-
-# same IP section       100
-# same IP section 2     60
-# same ISP              10
-# diff ISP              5
-# long ISP              1
+SAME_SECTION_WEIGHT = 1000
 
 
 def bidirection_dict(d):
