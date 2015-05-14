@@ -25,7 +25,8 @@ DEFAULT_WEIGHT_MAP = {
     ('192.168', '10.16'): 1,
 }
 DEFAULT_DIRECTIONAL_WEIGHT = {
-    ('10.16.19', '10.13.82'): 40,
+    ('10.16.19', '10.13.82'): 60,
+    ('10.10', '10.13'): 40,
 }
 SAME_SECTION_WEIGHT = 100
 
