@@ -314,7 +314,7 @@ class WeightNodes(object):
         node_counter = self._node_counter[node]
         node_counter['release'] += 1
         node_counter['time_cost'] += time_cost
-        node_counter['state'] += 'ok'
+        node_counter['state'] = 'ok'
 
     def dead_node(self, node, time_cost=0):
         self._fail.add(node)
@@ -326,7 +326,7 @@ class WeightNodes(object):
         node_counter = self._node_counter[node]
         node_counter['dead'] += 1
         node_counter['time_cost'] += time_cost
-        node_counter['state'] += 'fail'
+        node_counter['state'] = 'fail'
         node_counter['last_fail'] = time.time()
 
         logger.info(u'剔除node:%s' % node)
