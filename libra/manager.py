@@ -273,6 +273,9 @@ class WeightNodes(object):
                 'get': 0,
                 'release': 0,
                 'dead': 0,
+                'state': 'ok',
+                'time_cost': 0,
+                'last_fail': 'never',
             }
 
         self._live_len = len(self._live_nodes)
@@ -298,7 +301,7 @@ class WeightNodes(object):
         self._node_counter[node]['get'] += 1
         return node
 
-    def release_node(self, node):
+    def release_node(self, node, time_cost=0):
         if node in self._fail:
             self._fail.remove(node)
             self._live.add(node)
@@ -306,20 +309,30 @@ class WeightNodes(object):
             self._live_nodes += [node] * v
             self._live_len = len(self._live_nodes)
             random.shuffle(self._live_nodes)
-            logger.info('恢复node:%s' % node)
-        self._node_counter[node]['release'] += 1
+            logger.info(u'恢复node:%s' % node)
 
-    def dead_node(self, node):
+        node_counter = self._node_counter[node]
+        node_counter['release'] += 1
+        node_counter['time_cost'] += time_cost
+        node_counter['state'] += 'ok'
+
+    def dead_node(self, node, time_cost=0):
         self._fail.add(node)
         self._live.remove(node)
         self._live_nodes = filter(lambda x: x != node, self._live_nodes)
         self._live_len = len(self._live_nodes)
         random.shuffle(self._live_nodes)
-        self._node_counter[node]['dead'] += 1
-        logger.info('剔除node:%s' % node)
+
+        node_counter = self._node_counter[node]
+        node_counter['dead'] += 1
+        node_counter['time_cost'] += time_cost
+        node_counter['state'] += 'fail'
+        node_counter['last_fail'] = time.time()
+
+        logger.info(u'剔除node:%s' % node)
 
         if not self._live_nodes:
-            logger.warning("所有节点都失败了，请立刻检测")
+            logger.warning(u"所有节点都失败了，请立刻检测")
 
     def get_node_counter(self):
         return self._node_counter
