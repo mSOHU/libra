@@ -5,29 +5,6 @@ __author__ = 'johnxu'
 __date__ = '2015/5/12 16:09'
 
 
-DEFAULT_WEIGHT_MAP = {
-    ('10.10.81', '10.10.51'): 60,
-    ('10.10', '10.11'): 5,
-    ('10.10', '192.168'): 5,
-    ('10.10', '10.13'): 5,
-    ('10.10', '10.16'): 1,
-
-    ('10.13.80', '10.13.83'): 60,
-    ('10.13.81', '10.13.83'): 60,
-    ('10.13.82', '10.13.83'): 60,
-    ('10.13', '10.11'): 5,
-    ('10.13', '192.168'): 5,
-    ('10.13', '10.16'): 1,
-
-    ('10.11', '192.168'): 10,
-    ('10.11', '10.16'): 1,
-
-    ('192.168', '10.16'): 1,
-}
-DEFAULT_DIRECTIONAL_WEIGHT = {
-    ('10.16.19', '10.13.82'): 200,
-    ('10.10', '10.13'): 200,
-}
 SAME_SECTION_WEIGHT = 100
 
 # same IP section       100
@@ -49,9 +26,8 @@ def ip_section(ip, depth=2):
     return '.'.join(ip.split('.')[:depth])
 
 
-def calc_weight(local_ip, remote_nodes, section_depth=3,
-                weight_map=DEFAULT_WEIGHT_MAP,
-                directional_weight=DEFAULT_DIRECTIONAL_WEIGHT):
+def calc_weight(local_ip, remote_nodes, weight_map,
+                directional_weight, section_depth=3):
     weight_map = bidirection_dict(weight_map)
     weight_map.update(directional_weight)
 
