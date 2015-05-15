@@ -262,6 +262,7 @@ class WeightNodes(object):
         self._live = set()
         self._fail = set()
         self._recovery_num = recovery_num
+        self._MAX_TIME_COST_NUM = 1000
 
         self._node_counter = {}
 
@@ -275,7 +276,9 @@ class WeightNodes(object):
                 'dead': 0,
                 'state': 'ok',
                 'time_cost': 0,
+                'time_cost_history': [],
                 'last_fail': 'never',
+
             }
 
         self._live_len = len(self._live_nodes)
@@ -314,6 +317,10 @@ class WeightNodes(object):
         node_counter = self._node_counter[node]
         node_counter['release'] += 1
         node_counter['time_cost'] += time_cost
+        node_counter['time_cost_history'].append(time_cost)
+        if len(node_counter['time_cost_history']) > self._MAX_TIME_COST_NUM:
+            del node_counter['time_cost_history'][0]
+
         node_counter['state'] = 'ok'
 
     def dead_node(self, node, time_cost=0):
@@ -326,6 +333,9 @@ class WeightNodes(object):
         node_counter = self._node_counter[node]
         node_counter['dead'] += 1
         node_counter['time_cost'] += time_cost
+        node_counter['time_cost_history'].append(time_cost)
+        if len(node_counter['time_cost_history']) > self._MAX_TIME_COST_NUM:
+            del node_counter['time_cost_history'][0]
         node_counter['state'] = 'fail'
         node_counter['last_fail'] = time.time()
 

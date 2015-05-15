@@ -5,8 +5,7 @@
 """
 import random
 import time
-from libra.manager import AveragePointVisit
-
+from libra.manager import AveragePointVisit, WeightNodes
 
 
 class Server():
@@ -55,25 +54,12 @@ def main():
         Server('E', 0.3): 20,
     }
 
-    TableManger = AveragePointVisit(TableServer, bt=2, el=2, ct=1, cc=10, rn=2)
+    TableManger = WeightNodes(TableServer)
 
-    for i in range(10000000):
-        if i % 100 == 0:
-            time.sleep(1)
-        serv, status = TableManger.get_points()
-
-        print "当前选择服务器："
-        print serv.name, status,
-
-        if serv.name == "B":
-            pass
-        # 模拟使用
-        TableManger.acquire(serv)
-        if serv.request():
-            TableManger.release(serv)
-            print 'True',
-        else:
-            print 'False'
+    node = TableManger.get_node()
+    TableManger.release_node(node, time_cost=1)
+    TableManger.dead_node(node,time_cost=2)
+    pass
 
 
 
