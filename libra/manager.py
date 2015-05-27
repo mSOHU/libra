@@ -1,15 +1,32 @@
 # coding: utf-8
 
-import logging
-import random
 import time
+import random
+import logging
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
 
-class WeightNodes(object):
+class BaseManager(object):
+    def get_node(self):
+        raise NotImplementedError()
+
+    def release_node(self, node, time_cost=0):
+        raise NotImplementedError()
+
+    def dead_node(self, node, time_cost=0):
+        raise NotImplementedError()
+
+    def get_node_counter(self):
+        raise NotImplementedError()
+
+
+class WeightNodes(BaseManager):
     """按权重返回node
     """
+    COST_HISTORY_COUNT = 1000
+    MAX_STEP = 1000000000
 
     def __init__(self, weight_table, recovery_num=1000):
         """
@@ -17,14 +34,11 @@ class WeightNodes(object):
             weight_table: 字典类型，权重对应表
         """
         self._step = 0
-        self._MAX_STEP = 1000000000
         self._weight_node = {}
         self._live_nodes = []
         self._live = set()
         self._fail = set()
         self._recovery_num = recovery_num
-        self._MAX_TIME_COST_NUM = 1000
-
         self._node_counter = {}
 
         for k, v in weight_table.iteritems():
@@ -37,7 +51,7 @@ class WeightNodes(object):
                 'dead': 0,
                 'state': 'ok',
                 'time_cost': 0,
-                'time_cost_history': [0],
+                'time_cost_history': deque(maxlen=1000),
                 'last_fail': 'never',
 
             }
@@ -46,7 +60,7 @@ class WeightNodes(object):
         random.shuffle(self._live_nodes)
 
     def get_node(self):
-        self._step = (self._step + 1) % self._MAX_STEP
+        self._step = (self._step + 1) % self.MAX_STEP
 
         # 重试机制
         if self._fail and self._step % self._recovery_num == 0:
@@ -79,9 +93,6 @@ class WeightNodes(object):
         node_counter['release'] += 1
         node_counter['time_cost'] += time_cost
         node_counter['time_cost_history'].append(time_cost)
-        if len(node_counter['time_cost_history']) > self._MAX_TIME_COST_NUM:
-            del node_counter['time_cost_history'][0]
-
         node_counter['state'] = 'ok'
 
     def dead_node(self, node, time_cost=0):
@@ -95,8 +106,6 @@ class WeightNodes(object):
         node_counter['dead'] += 1
         node_counter['time_cost'] += time_cost
         node_counter['time_cost_history'].append(time_cost)
-        if len(node_counter['time_cost_history']) > self._MAX_TIME_COST_NUM:
-            del node_counter['time_cost_history'][0]
         node_counter['state'] = 'fail'
         node_counter['last_fail'] = time.time()
 
@@ -107,10 +116,3 @@ class WeightNodes(object):
 
     def get_node_counter(self):
         return self._node_counter
-
-
-
-
-
-
-
