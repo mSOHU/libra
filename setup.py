@@ -1,4 +1,5 @@
-#coding: utf-8
+# coding: utf-8
+
 from setuptools import setup, find_packages
 
 PACKAGE = "libra"
@@ -19,16 +20,11 @@ setup(
     url=URL,
     packages=find_packages(exclude=["*.pyc"]),
     install_requires=[
-
+        'tornado>=2.4.1',
     ],
     classifiers=[
         "Topic: Load balancing algorithm",
         "Operating System :: Ubuntu",
         "Programming Language :: Python",
-
     ],
-
-    # entry_points={
-    # },
-
 )
