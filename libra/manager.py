@@ -25,7 +25,7 @@ class BaseManager(object):
 class WeightNodes(BaseManager):
     """按权重返回node
     """
-    COST_HISTORY_COUNT = 1000
+    COST_HISTORY_COUNT = 100
     MAX_STEP = 1000000000
 
     def __init__(self, weight_table, recovery_num=1000):
@@ -51,9 +51,8 @@ class WeightNodes(BaseManager):
                 'dead': 0,
                 'state': 'ok',
                 'time_cost': 0,
-                'time_cost_history': deque(maxlen=1000),
+                'time_cost_history': deque(maxlen=self.COST_HISTORY_COUNT),
                 'last_fail': 'never',
-
             }
 
         self._live_len = len(self._live_nodes)
