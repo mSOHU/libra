@@ -16,8 +16,8 @@ class LibraAsyncHTTPClient(simple_httpclient.SimpleAsyncHTTPClient):
                    hostname_mapping=None, max_buffer_size=104857600,
                    manager=None, placeholder='__node__'):
         super(LibraAsyncHTTPClient, self).initialize(
-            io_loop=io_loop, max_clients=10,
-            hostname_mapping=None, max_buffer_size=104857600)
+            io_loop=io_loop, max_clients=max_clients,
+            hostname_mapping=hostname_mapping, max_buffer_size=max_buffer_size)
 
         self.manager = manager
         self.placeholder = placeholder
