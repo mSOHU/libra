@@ -12,7 +12,7 @@ URL = "http://m.sohu.com/"
 
 setup(
     name=NAME,
-    version='0.0.8',
+    version='0.0.9',
     description=DESCRIPTION,
     long_description="Load balancing",
     author=AUTHOR,

@@ -5,7 +5,7 @@ __author__ = 'johnxu'
 import logging
 import functools
 
-from tornado import simple_httpclient
+from tornado import simple_httpclient, httpclient
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,13 +25,14 @@ class LibraAsyncHTTPClient(simple_httpclient.SimpleAsyncHTTPClient):
     def fetch(self, request, callback, **kwargs):
         @functools.wraps(callback)
         def wrapper(response):
-            if response.error:
+            error = response.error
+            if error and isinstance(error, httpclient.HTTPError) and error.code == 599:
                 LOGGER.error('LIBRA: dead node, %s, %ss', node, response.request_time)
                 self.manager.dead_node(node, response.request_time)
             else:
                 LOGGER.debug('LIBRA: release node, %s, %ss', node, response.request_time)
                 self.manager.release_node(node, response.request_time)
-            return callback(response)
+            return callback and callback(response)
 
         node = self.manager.get_node()
         LOGGER.debug('LIBRA: got node, %s', node)
