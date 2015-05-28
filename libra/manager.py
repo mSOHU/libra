@@ -95,11 +95,12 @@ class WeightNodes(BaseManager):
         node_counter['state'] = 'ok'
 
     def dead_node(self, node, time_cost=0):
-        self._fail.add(node)
-        self._live.remove(node)
-        self._live_nodes = filter(lambda x: x != node, self._live_nodes)
-        self._live_len = len(self._live_nodes)
-        random.shuffle(self._live_nodes)
+        if node in self._live:
+            self._fail.add(node)
+            self._live.remove(node)
+            self._live_nodes = filter(lambda x: x != node, self._live_nodes)
+            self._live_len = len(self._live_nodes)
+            random.shuffle(self._live_nodes)
 
         node_counter = self._node_counter[node]
         node_counter['dead'] += 1
