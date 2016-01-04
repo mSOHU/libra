@@ -112,7 +112,7 @@ class WeightNodes(BaseManager):
         logger.info(u'剔除node:%s' % node)
 
         if not self._live_nodes:
-            logger.warning(u"所有节点都失败了，请立刻检测")
+            logger.error(u"所有节点都失败了，请立刻检测")
 
     def get_node_counter(self):
         return self._node_counter

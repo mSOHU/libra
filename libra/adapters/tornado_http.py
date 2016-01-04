@@ -27,7 +27,7 @@ class LibraAsyncHTTPClient(simple_httpclient.SimpleAsyncHTTPClient):
         def wrapper(response):
             error = response.error
             if error and isinstance(error, httpclient.HTTPError) and error.code == 599:
-                LOGGER.error('LIBRA: dead node, %s, %ss', node, response.request_time)
+                LOGGER.warning('LIBRA: dead node, %s, %.2fs', node, response.request_time)
                 self.manager.dead_node(node, response.request_time)
             else:
                 LOGGER.debug('LIBRA: release node, %s, %ss', node, response.request_time)
