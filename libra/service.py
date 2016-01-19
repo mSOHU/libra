@@ -27,22 +27,13 @@ class ServiceUnavailable(Exception):
 
 class ServiceManager(object):
     """
-    @libra.depends('redis.main')
-    def test(main_redis):
+    @manager.depends('redis.main_read')
+    def test():
         return main_redis.lrange('some_key', 0, -1)
 
     @test.downgrade
     def test_down():
         return []
-
-    ---
-    # @libra.require(main_redis='redis.main')
-    # def test(main_redis):
-    #     return main_redis.lrange('some_key', 0, -1)
-
-    # @test.downgrade(down=[1, 2, 3])
-    # def test_down():
-    #     return []
     """
     SERVICES_PATH = '/static-services/%s'
 
