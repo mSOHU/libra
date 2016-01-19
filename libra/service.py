@@ -6,6 +6,7 @@
 @date: 1/18/2016 6:20 PM
 """
 
+import logging
 import functools
 import threading
 from collections import defaultdict
@@ -13,6 +14,9 @@ from collections import defaultdict
 import etcd
 
 from libra.utils import get_etcd
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ServiceUnavailable(Exception):
@@ -81,7 +85,10 @@ class ServiceManager(object):
         while True:
             try:
                 item = self.server.watch(self.service_path, index, timeout=60, recursive=True)
-            except etcd.EtcdException:
+            except etcd.EtcdWatchTimedOut:
+                continue
+            except Exception as err:
+                LOGGER.exception('while watch service status: %r', err)
                 continue
             else:
                 self.on_change(item)
