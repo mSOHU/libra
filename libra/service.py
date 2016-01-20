@@ -41,7 +41,7 @@ class ServiceManager(object):
         self.prefix = prefix
         self.server = get_etcd()
         self.service_path = self.SERVICES_PATH % self.prefix
-        self.statuses = defaultdict(lambda: False)
+        self.statuses = defaultdict(lambda: 'unknown')
         self.monitor_thread = threading.Thread(target=self._monitor_fn)
         self.monitor_thread.daemon = True
 
@@ -70,7 +70,7 @@ class ServiceManager(object):
         return decorator
 
     def _monitor_fn(self):
-        initial_item = self.server.read(self.service_path)
+        initial_item = self.server.read(self.service_path, recursive=True)
 
         index = self.init_statuses(initial_item) + 1
         while True:
@@ -98,9 +98,13 @@ class ServiceManager(object):
 
             assert item_key.startswith(self.service_path)
             service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
-            self.statuses[service_name] = item.value
+            self.set_status(service_name, item.value)
 
         return max_index
+
+    def set_status(self, service_name, new_value):
+        LOGGER.info('service `%s` [%s] -> [%s]', service_name, self.statuses[service_name], new_value)
+        self.statuses[service_name] = new_value
 
     def on_change(self, item):
         """
@@ -119,7 +123,7 @@ class ServiceManager(object):
         if item.action == 'set':
             if item_key.endswith('/status'):
                 service_name = item_key[1:-len('/status')].replace('/', '.')
-                self.statuses[service_name] = item.value
+                self.set_status(service_name, item.value)
         elif item.action == 'delete':
             if item_key.endswith('/status'):
                 service_base = item_key[1:-len('/status')].replace('/', '.')
@@ -128,6 +132,6 @@ class ServiceManager(object):
             else:
                 return
 
-            for key in self.statuses:
-                if key.startswith(service_base):
-                    self.statuses[key] = 'unknown'
+            for service_name in self.statuses:
+                if service_name.startswith(service_base):
+                    self.set_status(service_name, 'unknown')
