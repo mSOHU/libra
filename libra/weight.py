@@ -6,6 +6,19 @@ __date__ = '2015/5/12 16:09'
 
 
 SAME_SECTION_WEIGHT = 1000
+REPLICA_WEIGHT_MAP = {
+    ('10.10', '192.168'): 400,
+    ('10.10', '10.13'): 250,
+    ('10.10', '10.16'): 1,
+
+    ('10.13', '192.168'): 1000,
+    ('10.13', '10.16'): 1,
+    ('192.168', '10.16'): 1,
+}
+REPLICA_DIRECTIONAL_WEIGHT = {
+    ('10.16.19', '10.13.82'): 10,
+    ('10.13', '10.10'): 1,
+}
 
 
 def bidirection_dict(d):
@@ -20,8 +33,10 @@ def ip_section(ip, depth=2):
     return '.'.join(ip.split('.')[:depth])
 
 
-def calc_weight(local_ip, remote_nodes, weight_map,
-                directional_weight, section_depth=3):
+def calc_weight(local_ip, remote_nodes,
+                weight_map=REPLICA_WEIGHT_MAP,
+                directional_weight=REPLICA_DIRECTIONAL_WEIGHT,
+                section_depth=3):
     weight_map = bidirection_dict(weight_map)
     weight_map.update(directional_weight)
 
