@@ -7,6 +7,7 @@
 """
 
 import time
+import random
 
 from libra.service import ServiceManager
 
@@ -28,3 +29,5 @@ if __name__ == '__main__':
     while True:
         time.sleep(1)
         print time.ctime(), read_function()
+        new_status = 'ready' if random.random() > 0.2 else 'down'
+        manager.set_status('redis.main_read', new_status)

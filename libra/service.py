@@ -99,13 +99,17 @@ class ServiceManager(object):
 
             assert item_key.startswith(self.service_path)
             service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
-            self.set_status(service_name, item.value)
+            self.update_status(service_name, item.value)
 
         return max_index
 
-    def set_status(self, service_name, new_value):
+    def update_status(self, service_name, new_value):
         LOGGER.info('service `%s` [%s] -> [%s]', service_name, self.statuses[service_name], new_value)
         self.statuses[service_name] = new_value
+
+    def set_status(self, service_name, new_value):
+        """set service status to server"""
+        self.server.set('%s/%s/status' % (self.service_path, service_name.replace('.', '/')), new_value)
 
     def get_statuses(self):
         return dict(self.statuses)
@@ -127,7 +131,7 @@ class ServiceManager(object):
         if item.action == 'set':
             if item_key.endswith('/status'):
                 service_name = item_key[1:-len('/status')].replace('/', '.')
-                self.set_status(service_name, item.value)
+                self.update_status(service_name, item.value)
         elif item.action == 'delete':
             if item_key.endswith('/status'):
                 service_base = item_key[1:-len('/status')].replace('/', '.')
@@ -138,4 +142,4 @@ class ServiceManager(object):
 
             for service_name in self.statuses:
                 if service_name.startswith(service_base):
-                    self.set_status(service_name, 'unknown')
+                    self.update_status(service_name, 'unknown')
