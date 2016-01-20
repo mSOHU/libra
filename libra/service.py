@@ -70,6 +70,16 @@ class ServiceManager(object):
             return wrapper
         return decorator
 
+    @classmethod
+    def downgrade(cls, func):
+        if isinstance(func, (classmethod, staticmethod)):
+            func = func.__func__
+
+        if type(func).__name__ == 'LRUCachedFunction' and hasattr(func, 'function'):
+            func = func.function
+
+        return func.downgrade
+
     def _monitor_fn(self):
         initial_item = self.server.read(self.service_path, recursive=True)
 
