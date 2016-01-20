@@ -64,6 +64,7 @@ class ServiceManager(object):
 
             def _downgrade(dfn):
                 downgrade_fn[0] = dfn
+                return dfn
 
             wrapper.downgrade = _downgrade
             return wrapper
@@ -105,6 +106,9 @@ class ServiceManager(object):
     def set_status(self, service_name, new_value):
         LOGGER.info('service `%s` [%s] -> [%s]', service_name, self.statuses[service_name], new_value)
         self.statuses[service_name] = new_value
+
+    def get_statuses(self):
+        return dict(self.statuses)
 
     def on_change(self, item):
         """
