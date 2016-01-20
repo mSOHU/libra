@@ -10,7 +10,6 @@ setup(
     author_email='xuweizheng@sohu-inc.com',
     url='http://m.sohu.com/',
     packages=find_packages(exclude=["*.pyc"]),
-    include_package_data=True,
     package_data={
         'libra': ['conf/config.yaml']
     },
