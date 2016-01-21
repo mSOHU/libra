@@ -75,6 +75,13 @@ class ServiceManager(object):
         if isinstance(func, (classmethod, staticmethod)):
             func = func.__func__
 
+        # handle gen.engine
+        if getattr(func, 'func_closure', None):
+            func_code = func.func_code
+            if func_code.co_filename.endswith('gen.py') and func_code.co_name == 'wrapper':
+                func = func.func_closure[0].cell_contents
+
+        # handle lru_cached_function
         if type(func).__name__ == 'LRUCachedFunction' and hasattr(func, 'function'):
             func = func.function
 
