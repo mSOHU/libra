@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='libra',
-    version='0.1.0',
+    version='0.1.1',
     author='xuweizheng; ctycheer',
     author_email='xuweizheng@sohu-inc.com',
     url='http://m.sohu.com/',
@@ -15,6 +15,7 @@ setup(
     },
     install_requires=[
         'python-etcd==0.4.3',
+        'urllib3==1.14.dev0',
         'pyyaml',
     ],
 )

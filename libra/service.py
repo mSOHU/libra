@@ -97,7 +97,7 @@ class ServiceManager(object):
             except etcd.EtcdWatchTimedOut:
                 continue
             except Exception as err:
-                LOGGER.exception('while watch service status: %r', err)
+                LOGGER.exception('%r, while watching service status', err)
                 continue
             else:
                 self.on_change(item)
@@ -121,7 +121,9 @@ class ServiceManager(object):
         return max_index
 
     def update_status(self, service_name, new_value):
-        LOGGER.info('service `%s` [%s] -> [%s]', service_name, self.statuses[service_name], new_value)
+        old_value = self.statuses[service_name]
+        log_fn = LOGGER.info if old_value != new_value else LOGGER.debug
+        log_fn('service status changed: `%s` [%s] -> [%s]', service_name, old_value, new_value)
         self.statuses[service_name] = new_value
 
     def set_status(self, service_name, new_value):
