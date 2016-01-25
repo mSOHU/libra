@@ -7,6 +7,7 @@
 """
 
 import os
+import random
 import functools
 
 import etcd
@@ -40,8 +41,9 @@ def get_etcd():
     """
     global _ETCD_CLIENT
     if _ETCD_CLIENT is None:
-        servers = tuple((host, port) for host, port in get_conf('etcd.server'))
+        servers = [(host, port) for host, port in get_conf('etcd.server')]
+        random.shuffle(servers)
         _ETCD_CLIENT = etcd.Client(
-            servers, **get_conf('etcd.settings')
+            tuple(servers), **get_conf('etcd.settings')
         )
     return _ETCD_CLIENT
