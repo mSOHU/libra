@@ -65,5 +65,7 @@ def init_logging(standalone=False):
         logger.propagate = False
         logger.addHandler(handler)
 
+    # hide INFO level for prevent meaningless `Resetting dropped connection`
+    # for every watch request with a timeout must triggers.
     logger = logging.getLogger('urllib3.connectionpool')
     logger.setLevel(logging.WARNING)

@@ -93,6 +93,8 @@ class ServiceManager(object):
         index = self.init_statuses(initial_item) + 1
         while True:
             try:
+                # we don't use timeout=0 to prevent fake death of connection,
+                # due our network situation is not reliable
                 item = self.server.watch(self.service_path, index, timeout=60, recursive=True)
             except etcd.EtcdWatchTimedOut:
                 continue
