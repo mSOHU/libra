@@ -9,9 +9,10 @@
 import time
 import random
 
+from libra.utils import init_logging
 from libra.service import ServiceManager
 
-manager = ServiceManager('product')
+manager = ServiceManager('develop')
 manager.start_monitor()
 
 
@@ -26,6 +27,7 @@ def read_down():
 
 
 if __name__ == '__main__':
+    init_logging(standalone=True)
     while True:
         time.sleep(1)
         print time.ctime(), read_function()

@@ -8,6 +8,7 @@
 
 import os
 import random
+import logging
 import functools
 
 import etcd
@@ -47,3 +48,22 @@ def get_etcd():
             tuple(servers), **get_conf('etcd.settings')
         )
     return _ETCD_CLIENT
+
+
+def init_logging(standalone=False):
+    if standalone:
+        formatter = logging.Formatter(
+            '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.DEBUG)
+
+        logger = logging.getLogger('libra')
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+        logger.addHandler(handler)
+
+    logger = logging.getLogger('urllib3.connectionpool')
+    logger.setLevel(logging.WARNING)
