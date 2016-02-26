@@ -34,6 +34,12 @@ class ServiceManager(object):
     @test.downgrade
     def test_down():
         return []
+
+    -- or --
+
+    @manager.downgrade(test)
+    def test_down():
+        return []
     """
     SERVICES_PATH = '/static-services/%s'
 
