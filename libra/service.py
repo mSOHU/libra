@@ -104,6 +104,9 @@ class ServiceManager(object):
                 item = self.server.watch(self.service_path, index, timeout=60, recursive=True)
             except etcd.EtcdWatchTimedOut:
                 continue
+            except etcd.EtcdEventIndexCleared as err:
+                index = err.payload['index']
+                continue
             except Exception as err:
                 LOGGER.exception('%r, while watching service status', err)
                 continue
@@ -126,6 +129,7 @@ class ServiceManager(object):
             service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
             self.update_status(service_name, item.value)
 
+        print max_index
         return max_index
 
     def update_status(self, service_name, new_value):
