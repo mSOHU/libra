@@ -129,7 +129,6 @@ class ServiceManager(object):
             service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
             self.update_status(service_name, item.value)
 
-        print max_index
         return max_index
 
     def update_status(self, service_name, new_value):
