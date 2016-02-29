@@ -105,7 +105,11 @@ class ServiceManager(object):
             except etcd.EtcdWatchTimedOut:
                 continue
             except etcd.EtcdEventIndexCleared as err:
-                index = err.payload['index']
+                new_index = err.payload['index']
+                LOGGER.warning('Etcd: %s [%u -> %u]', err.payload['cause'], index, new_index)
+                root = self.server.read(self.service_path, recursive=True)
+                self.resync_statuses(root, index)
+                index = new_index
                 continue
             except Exception as err:
                 LOGGER.exception('%r, while watching service status', err)
@@ -130,6 +134,19 @@ class ServiceManager(object):
             self.update_status(service_name, item.value)
 
         return max_index
+
+    def resync_statuses(self, root, current):
+        for item in root.leaves:
+            if current >= item.modifiedIndex:
+                continue
+
+            item_key = item.key
+            if item.dir or not item_key.endswith('/status'):
+                continue
+
+            assert item_key.startswith(self.service_path)
+            service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
+            self.update_status(service_name, item.value)
 
     def update_status(self, service_name, new_value):
         old_value = self.statuses[service_name]
