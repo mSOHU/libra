@@ -35,8 +35,8 @@ class Watcher(object):
 
     def _watcher_fn(self):
         initial_item = self.server.read(self.watch_path, recursive=True)
-
         current_index = self.calc_max_index(initial_item) + 1
+
         while True:
             try:
                 # we don't use timeout=0 to prevent fake death of connection,
@@ -44,12 +44,26 @@ class Watcher(object):
                 item = self.server.watch(self.watch_path, current_index, timeout=60, recursive=True)
             except etcd.EtcdWatchTimedOut:
                 continue
+            except etcd.EtcdEventIndexCleared as err:
+                new_index = err.payload['index']
+                LOGGER.warning('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
+                root = self.server.read(self.watch_path, recursive=True)
+                self.resync_statuses(root, current_index)
+                current_index = new_index
+                continue
             except Exception as err:
                 LOGGER.exception('%r, while watching service status', err)
                 continue
             else:
                 self.on_change(item)
                 current_index = item.modifiedIndex + 1
+
+    def resync_statuses(self, root, current):
+        for item in root.leaves:
+            if current >= item.modifiedIndex:
+                continue
+
+            self.on_change(item)
 
     def on_change(self, item):
         item_key = item.key
