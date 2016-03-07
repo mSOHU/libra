@@ -6,6 +6,7 @@
 @date: 2/26/2016 3:25 PM
 """
 
+import time
 import logging
 import threading
 
@@ -62,6 +63,8 @@ class Watcher(object):
                 continue
             except Exception as err:
                 LOGGER.exception('%r, while watching service status', err)
+                # avoid potential dead loop
+                time.sleep(.2)
                 continue
             else:
                 self.on_change(item)
