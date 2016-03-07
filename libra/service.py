@@ -8,12 +8,9 @@
 
 import logging
 import functools
-import threading
 from collections import defaultdict
 
-import etcd
-
-from libra.utils import get_etcd
+from libra.watcher import Watcher
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,15 +38,17 @@ class ServiceManager(object):
     def test_down():
         return []
     """
-    SERVICES_PATH = '/static-services/%s'
+    SERVICES_PATH = '/static-services'
 
     def __init__(self, prefix=None):
         self.prefix = prefix
-        self.server = get_etcd()
-        self.service_path = self.SERVICES_PATH % self.prefix
         self.statuses = defaultdict(lambda: 'unknown')
-        self.monitor_thread = threading.Thread(target=self._monitor_fn)
-        self.monitor_thread.daemon = True
+        self.watcher = Watcher(
+            self.SERVICES_PATH,
+            change_callback=self.on_change,
+            init_callback=self.init_statuses,
+            prefix=prefix
+        )
 
     def depends(self, *services):
         def decorator(fn):
@@ -93,59 +92,14 @@ class ServiceManager(object):
 
         return func.downgrade
 
-    def _monitor_fn(self):
-        initial_item = self.server.read(self.service_path, recursive=True)
-
-        index = self.init_statuses(initial_item) + 1
-        while True:
-            try:
-                # we don't use timeout=0 to prevent fake death of connection,
-                # due our network situation is not reliable
-                item = self.server.watch(self.service_path, index, timeout=60, recursive=True)
-            except etcd.EtcdWatchTimedOut:
-                continue
-            except etcd.EtcdEventIndexCleared as err:
-                new_index = err.payload['index']
-                LOGGER.warning('Etcd: %s [%u -> %u]', err.payload['cause'], index, new_index)
-                root = self.server.read(self.service_path, recursive=True)
-                self.resync_statuses(root, index)
-                index = new_index
-                continue
-            except Exception as err:
-                LOGGER.exception('%r, while watching service status', err)
-                continue
-            else:
-                self.on_change(item)
-                index = item.modifiedIndex + 1
-
-    def start_monitor(self):
-        self.monitor_thread.start()
-
     def init_statuses(self, root):
-        max_index = root.modifiedIndex
         for item in root.leaves:
-            max_index = max(max_index, item.modifiedIndex)
             item_key = item.key
             if item.dir or not item_key.endswith('/status'):
                 continue
 
-            assert item_key.startswith(self.service_path)
-            service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
-            self.update_status(service_name, item.value)
-
-        return max_index
-
-    def resync_statuses(self, root, current):
-        for item in root.leaves:
-            if current >= item.modifiedIndex:
-                continue
-
-            item_key = item.key
-            if item.dir or not item_key.endswith('/status'):
-                continue
-
-            assert item_key.startswith(self.service_path)
-            service_name = item_key[len(self.service_path)+1:-len('/status')].replace('/', '.')
+            assert item_key.startswith(self.watcher.watch_path)
+            service_name = item_key[len(self.watcher.watch_path)+1:-len('/status')].replace('/', '.')
             self.update_status(service_name, item.value)
 
     def update_status(self, service_name, new_value):
@@ -156,12 +110,14 @@ class ServiceManager(object):
 
     def set_status(self, service_name, new_value):
         """set service status to server"""
-        self.server.set('%s/%s/status' % (self.service_path, service_name.replace('.', '/')), new_value)
+        self.watcher.server.set('%s/%s/%s/status' % (
+            self.SERVICES_PATH, self.prefix,
+            service_name.replace('.', '/')), new_value)
 
     def get_statuses(self):
         return dict(self.statuses)
 
-    def on_change(self, item):
+    def on_change(self, action, key, value, is_dir, **_):
         """
         action -> set
           - update status
@@ -171,18 +127,15 @@ class ServiceManager(object):
           - remove server(s)
 
         """
-        item_key = item.key
-        assert item_key.startswith(self.service_path)
-
-        item_key = item_key[len(self.service_path):]
-        if item.action == 'set':
+        item_key = key
+        if action == 'set':
             if item_key.endswith('/status'):
                 service_name = item_key[1:-len('/status')].replace('/', '.')
-                self.update_status(service_name, item.value)
-        elif item.action == 'delete':
+                self.update_status(service_name, value)
+        elif action == 'delete':
             if item_key.endswith('/status'):
                 service_base = item_key[1:-len('/status')].replace('/', '.')
-            elif item.dir:
+            elif is_dir:
                 service_base = item_key[1:].replace('/', '.')
             else:
                 return

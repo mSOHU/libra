@@ -24,9 +24,10 @@ class ServiceUnavailable(Exception):
 
 
 class Watcher(object):
-    def __init__(self, path, callback, prefix=None):
+    def __init__(self, path, change_callback, init_callback=None, prefix=None):
         self.prefix = prefix
-        self.callback = callback
+        self.change_callback = change_callback
+        self.init_callback = init_callback
         self.server = get_etcd()
         self.watch_path = '%s/%s' % (path, prefix) if prefix else path
         self.watcher_thread = threading.Thread(target=self._watcher_fn)
@@ -35,6 +36,14 @@ class Watcher(object):
 
     def _watcher_fn(self):
         initial_item = self.server.read(self.watch_path, recursive=True)
+        if callable(self.init_callback):
+            # we don't process exceptions, because this means coding issue
+            try:
+                self.init_callback(initial_item)
+            except Exception as err:
+                LOGGER.exception('%r, while invoking init_callback', err)
+                return
+
         current_index = self.calc_max_index(initial_item) + 1
 
         while True:
@@ -71,9 +80,9 @@ class Watcher(object):
 
         item_key = item_key[len(self.watch_path):]
         try:
-            self.callback(action=item.action, key=item_key, value=item.value)
+            self.change_callback(action=item.action, key=item_key, value=item.value, is_dir=item.dir)
         except Exception as err:
-            LOGGER.exception('Exception %r while invoking callback %r', err, self.callback)
+            LOGGER.exception('Exception %r while invoking callback %r', err, self.change_callback)
 
     @classmethod
     def calc_max_index(cls, root):
