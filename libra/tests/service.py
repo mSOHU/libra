@@ -13,7 +13,6 @@ from libra.utils import init_logging
 from libra.service import ServiceManager
 
 manager = ServiceManager('develop')
-manager.start_monitor()
 
 
 @manager.depends('redis.main_read')
