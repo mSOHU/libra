@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='libra',
-    version='0.2.1',
+    version='0.2.2',
     author='xuweizheng; ctycheer',
     author_email='xuweizheng@sohu-inc.com',
     url='http://m.sohu.com/',
