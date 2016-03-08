@@ -56,7 +56,7 @@ class Watcher(object):
                 continue
             except etcd.EtcdEventIndexCleared as err:
                 new_index = err.payload['index']
-                LOGGER.warning('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
+                LOGGER.info('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
                 root = self.server.read(self.watch_path, recursive=True)
                 self.resync_statuses(root, current_index)
                 current_index = new_index
