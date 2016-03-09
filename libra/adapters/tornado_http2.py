@@ -2,27 +2,31 @@
 
 """
 @author: johnxu
+@date: 3/8/2016 6:34 PM
 """
 
 import logging
 import functools
 
-from tornado import simple_httpclient, httpclient
+import http2
+from tornado import httpclient
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class LibraAsyncHTTPClient(simple_httpclient.SimpleAsyncHTTPClient):
-    def initialize(self, io_loop=None, max_clients=10,
-                   hostname_mapping=None, max_buffer_size=104857600,
-                   manager=None, placeholder='__node__'):
-        super(LibraAsyncHTTPClient, self).initialize(
-            io_loop=io_loop, max_clients=max_clients,
-            hostname_mapping=hostname_mapping, max_buffer_size=max_buffer_size)
-
+class LibraAsyncHTTP2Client(object):
+    def __init__(self, manager=None, placeholder='__node__', **conn_kwargs):
         self.manager = manager
         self.placeholder = placeholder
+
+        conn_kwargs.pop('host', None)
+        conn_kwargs['force_instance'] = True
+        self.conn_kwargs = conn_kwargs
+        self.clients = {
+            node: http2.SimpleAsyncHTTP2Client(host=node, **self.conn_kwargs)
+            for node in self.manager._weight_node
+        }
 
     def fetch(self, request, callback, **kwargs):
         @functools.wraps(callback)
@@ -38,5 +42,4 @@ class LibraAsyncHTTPClient(simple_httpclient.SimpleAsyncHTTPClient):
 
         node = self.manager.get_node()
         LOGGER.debug('LIBRA: got node, %s', node)
-        request.url = request.url.replace(self.placeholder, node)
-        return super(LibraAsyncHTTPClient, self).fetch(request, wrapper, **kwargs)
+        return self.clients[node].fetch(request, wrapper, **kwargs)
