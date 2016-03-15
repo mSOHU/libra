@@ -96,7 +96,7 @@ class Listener(object):
             else:
                 try:
                     if self.json_decode:
-                        contents = json.loads(self.json_decode)
+                        contents = json.loads(contents)
 
                     self.callback(routing_key=routing_key, payload=contents)
                 except Exception as err:
