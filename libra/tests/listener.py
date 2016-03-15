@@ -17,5 +17,5 @@ def listener(message):
     print '[+] event received: %s' % message
 
 
-Listener(callback=listener)
+Listener(callback=listener, prefixes=['B'])
 raw_input('Waiting for events...')
