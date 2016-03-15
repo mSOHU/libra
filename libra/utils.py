@@ -71,7 +71,7 @@ def init_logging(standalone=False):
     logger.setLevel(logging.WARNING)
 
 
-RR_COUNTER = 0
+RR_COUNTER = int(random.random() * 1000)
 
 
 def rr_next(modulus=1):
