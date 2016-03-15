@@ -18,12 +18,6 @@ from libra.utils import get_etcd
 LOGGER = logging.getLogger(__name__)
 
 
-class ServiceUnavailable(Exception):
-    def __init__(self, fn, services):
-        self.fn = fn
-        self.services = services
-
-
 class Watcher(object):
     def __init__(self, path, change_callback, init_callback=None, prefix=None):
         self.prefix = prefix
