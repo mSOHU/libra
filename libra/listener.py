@@ -69,9 +69,13 @@ class Listener(object):
         context = self.zmq_context = zmq.Context()
         subscriber = context.socket(zmq.SUB)
         subscriber.connect(endpoint)
+
         if self.prefixes:
             for prefix in self.prefixes:
                 subscriber.setsockopt(zmq.SUBSCRIBE, prefix)
+        else:
+            subscriber.setsockopt(zmq.SUBSCRIBE, '')
+
         subscriber.setsockopt(zmq.RCVTIMEO, 30000)
         self.zmq_subscriber = subscriber
 
