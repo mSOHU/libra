@@ -6,7 +6,6 @@
 """
 
 import logging
-import functools
 
 import http2
 from tornado import httpclient
@@ -29,7 +28,6 @@ class LibraAsyncHTTP2Client(object):
         }
 
     def fetch(self, request, callback, **kwargs):
-        @functools.wraps(callback)
         def wrapper(response):
             error = response.error
             if error and isinstance(error, httpclient.HTTPError) and error.code == 599:
