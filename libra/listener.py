@@ -26,6 +26,11 @@ class Listener(object):
 
     def __init__(self, callback, prefixes=None, json_decode=False):
         self.callback = callback
+
+        # only str is acceptable
+        if isinstance(prefixes, str):
+            prefixes = [prefixes]
+
         self.prefixes = prefixes or []
         self.json_decode = json_decode
         self.watcher = Watcher(
@@ -96,3 +101,13 @@ class Listener(object):
                     self.callback(routing_key=routing_key, payload=contents)
                 except Exception as err:
                     LOGGER.exception('Exception %r while invoking callback %r', err, self.callback)
+
+    @classmethod
+    def listen(cls, prefixes=None, json_decode=False):
+        def decorator(fn):
+            cls(fn, prefixes=prefixes, json_decode=json_decode)
+
+        return decorator
+
+
+listen = Listener.listen
