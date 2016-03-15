@@ -43,7 +43,6 @@ class Listener(object):
         # listener thread
         self.listen_thread = threading.Thread(target=self._listen_fn)
         self.listen_thread.daemon = True
-        self.listen_thread.start()
 
     def on_service_change(self, key, value, **kwargs):
         if key == 'endpoints':
@@ -58,6 +57,8 @@ class Listener(object):
     def on_service_init(self, root):
         for node in root.leaves:
             self.on_service_change(node.key[len(self.SERVICE_PATH)+1:], node.value)
+
+        self.listen_thread.start()
 
     def rebuild_context(self, endpoint):
         if self.zmq_context is not None:
