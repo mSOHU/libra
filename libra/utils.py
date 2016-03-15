@@ -69,3 +69,16 @@ def init_logging(standalone=False):
     # for every watch request with a timeout must triggers.
     logger = logging.getLogger('urllib3.connectionpool')
     logger.setLevel(logging.WARNING)
+
+
+RR_COUNTER = 0
+
+
+def rr_next(modulus=1):
+    global RR_COUNTER
+    RR_COUNTER += 1
+    return RR_COUNTER % modulus
+
+
+def rr_choice(choices):
+    return choices[rr_next(len(choices))]
