@@ -13,8 +13,8 @@ from libra.utils import init_logging
 init_logging(standalone=True)
 
 
-def listener(message):
-    print '[+] event received: %s' % message
+def listener(routing_key, payload, **kwargs):
+    print '[+] event received: %s:%s' % (routing_key, payload)
 
 
 Listener(callback=listener, prefixes=['B'])

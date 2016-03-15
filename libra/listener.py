@@ -35,10 +35,18 @@ class Listener(object):
         )
 
         # zmq
-        self.zmq_context = None
-        self.zmq_subscriber = None
-        self.zmq_endpoints = None
-        self.zmq_endpoint = None
+        self.context = zmq.Context()
+        subscriber = self.subscriber = self.context.socket(zmq.SUB)
+        subscriber.setsockopt(zmq.RCVTIMEO, 30000)
+
+        if self.prefixes:
+            for prefix in self.prefixes:
+                subscriber.setsockopt(zmq.SUBSCRIBE, prefix)
+        else:
+            subscriber.setsockopt(zmq.SUBSCRIBE, '')
+
+        self.endpoint_list = None
+        self.endpoint = None
 
         # listener thread
         self.listen_thread = threading.Thread(target=self._listen_fn)
@@ -46,13 +54,12 @@ class Listener(object):
 
     def on_service_change(self, key, value, **kwargs):
         if key == 'endpoints':
-            self.zmq_endpoints = json.loads(value)['endpoints']
+            self.endpoint_list = json.loads(value)['endpoints']
+
             # if current endpoint not in new endpoint list, then we requires rebuild the context
-            if self.zmq_endpoint not in self.zmq_endpoints:
-                endpoint = rr_choice(self.zmq_endpoints)
-                self.rebuild_context(endpoint)
-                self.zmq_endpoint = endpoint
-                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (self.zmq_endpoint, self.prefixes))
+            if self.endpoint not in self.endpoint_list:
+                self.rebuild_context(rr_choice(self.endpoint_list))
+                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (self.endpoint, self.prefixes))
 
     def on_service_init(self, root):
         for node in root.leaves:
@@ -61,32 +68,20 @@ class Listener(object):
         self.listen_thread.start()
 
     def rebuild_context(self, endpoint):
-        if self.zmq_context is not None:
-            self.zmq_subscriber.close()
-            self.zmq_context.term()
-            self.zmq_context = self.zmq_subscriber = None
+        self.endpoint, old_endpoint = endpoint, self.endpoint
 
-        context = self.zmq_context = zmq.Context()
-        subscriber = context.socket(zmq.SUB)
-        subscriber.connect(endpoint)
+        try:
+            if old_endpoint:
+                self.subscriber.disconnect(old_endpoint)
+        except zmq.ZMQError:
+            pass
 
-        if self.prefixes:
-            for prefix in self.prefixes:
-                subscriber.setsockopt(zmq.SUBSCRIBE, prefix)
-        else:
-            subscriber.setsockopt(zmq.SUBSCRIBE, '')
-
-        subscriber.setsockopt(zmq.RCVTIMEO, 30000)
-        self.zmq_subscriber = subscriber
+        self.subscriber.connect(self.endpoint)
 
     def _listen_fn(self):
         while True:
-            if not self.zmq_subscriber:
-                time.sleep(.2)
-                continue
-
             try:
-                address, contents = self.zmq_subscriber.recv_multipart()
+                routing_key, contents = self.subscriber.recv_multipart()
             except zmq.Again:
                 continue
             except Exception as err:
@@ -98,6 +93,6 @@ class Listener(object):
                     if self.json_decode:
                         contents = json.loads(self.json_decode)
 
-                    self.callback(contents)
+                    self.callback(routing_key=routing_key, payload=contents)
                 except Exception as err:
                     LOGGER.exception('Exception %r while invoking callback %r', err, self.callback)
