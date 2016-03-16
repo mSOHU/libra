@@ -48,21 +48,24 @@ class _Listener(object):
         self.listen_thread.daemon = True
 
     def on_service_change(self, key, value, **kwargs):
-        if key == 'endpoints':
+        if key[1:] == 'endpoints':
             self.endpoint_list = json.loads(value)['endpoints']
 
             # if current endpoint not in new endpoint list, then we requires rebuild the context
             if self.endpoint not in self.endpoint_list:
-                self.rebuild_context(rr_choice(self.endpoint_list))
-                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (self.endpoint, self.callbacks.keys()))
+                self.switch_endpoint(rr_choice(self.endpoint_list))
+                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (
+                    self.endpoint,
+                    [prefix for prefix, value in self.callbacks.items() if value]
+                ))
 
     def on_service_init(self, root):
         for node in root.leaves:
-            self.on_service_change(node.key[len(self.SERVICE_PATH)+1:], node.value)
+            self.on_service_change(node.key[len(self.SERVICE_PATH):], node.value)
 
         self.listen_thread.start()
 
-    def rebuild_context(self, endpoint):
+    def switch_endpoint(self, endpoint):
         self.endpoint, old_endpoint = endpoint, self.endpoint
 
         try:
