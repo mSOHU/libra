@@ -10,6 +10,7 @@ import json
 import time
 import logging
 import threading
+from collections import defaultdict
 
 import zmq
 
@@ -19,20 +20,12 @@ from libra.utils import rr_choice
 LOGGER = logging.getLogger(__name__)
 
 
-class Listener(object):
+class _Listener(object):
     """listens stateless event from zmq, the delivery is NOT guaranteed.
     """
     SERVICE_PATH = '/services/zmq'
 
-    def __init__(self, callback, prefixes=None, json_decode=False):
-        self.callback = callback
-
-        # only str is acceptable
-        if isinstance(prefixes, str):
-            prefixes = [prefixes]
-
-        self.prefixes = prefixes or []
-        self.json_decode = json_decode
+    def __init__(self):
         self.watcher = Watcher(
             self.SERVICE_PATH,
             change_callback=self.on_service_change,
@@ -44,11 +37,8 @@ class Listener(object):
         subscriber = self.subscriber = self.context.socket(zmq.SUB)
         subscriber.setsockopt(zmq.RCVTIMEO, 30000)
 
-        if self.prefixes:
-            for prefix in self.prefixes:
-                subscriber.setsockopt(zmq.SUBSCRIBE, prefix)
-        else:
-            subscriber.setsockopt(zmq.SUBSCRIBE, '')
+        self.callbacks = defaultdict(list)
+        self.prefixes = []
 
         self.endpoint_list = None
         self.endpoint = None
@@ -64,7 +54,7 @@ class Listener(object):
             # if current endpoint not in new endpoint list, then we requires rebuild the context
             if self.endpoint not in self.endpoint_list:
                 self.rebuild_context(rr_choice(self.endpoint_list))
-                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (self.endpoint, self.prefixes))
+                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (self.endpoint, self.callbacks.keys()))
 
     def on_service_init(self, root):
         for node in root.leaves:
@@ -94,20 +84,35 @@ class Listener(object):
                 # avoid potential dead loop
                 time.sleep(1)
             else:
-                try:
-                    if self.json_decode:
-                        contents = json.loads(contents)
+                for callback, json_decode in self.callbacks[routing_key]:
+                    try:
+                        if json_decode:
+                            contents = json.loads(contents)
 
-                    self.callback(routing_key=routing_key, payload=contents)
-                except Exception as err:
-                    LOGGER.exception('Exception %r while invoking callback %r', err, self.callback)
+                        callback(routing_key=routing_key, payload=contents)
+                    except Exception as err:
+                        LOGGER.exception(
+                            'Exception %r while invoking callback %s:%r',
+                            err, routing_key, callback
+                        )
 
-    @classmethod
-    def listen(cls, prefixes=None, json_decode=False):
+    def listen(self, routing_keys, json_decode=False):
+        # only str is acceptable
+        if isinstance(routing_keys, str):
+            routing_keys = [routing_keys]
+
+        assert routing_keys, 'no routing_key provided'
+        routing_keys = routing_keys or []
+
         def decorator(fn):
-            cls(fn, prefixes=prefixes, json_decode=json_decode)
+            for routing_key in routing_keys:
+                if routing_key not in self.callbacks:
+                    self.subscriber.setsockopt(zmq.SUBSCRIBE, routing_key)
+
+                self.callbacks[routing_key].append((fn, json_decode))
 
         return decorator
 
 
+Listener = _Listener()
 listen = Listener.listen

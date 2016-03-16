@@ -13,7 +13,7 @@ from libra.utils import init_logging
 init_logging(standalone=True)
 
 
-@listen('template')
+@listen('A')
 def listener(routing_key, payload, **_):
     print '[+] event received: %s:%s' % (routing_key, payload)
 
