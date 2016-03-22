@@ -69,3 +69,34 @@ def init_logging(standalone=False):
     # for every watch request with a timeout must triggers.
     logger = logging.getLogger('urllib3.connectionpool')
     logger.setLevel(logging.WARNING)
+
+
+RR_COUNTER = int(random.random() * 1000)
+
+
+def rr_next(modulus=1):
+    global RR_COUNTER
+    RR_COUNTER += 1
+    return RR_COUNTER % modulus
+
+
+def rr_choice(choices):
+    return choices[rr_next(len(choices))]
+
+
+_UTF8_TYPES = (bytes, type(None))
+
+
+def utf8(value):
+    """Converts a string argument to a byte string.
+
+    If the argument is already a byte string or None, it is returned unchanged.
+    Otherwise it must be a unicode string and is encoded as utf8.
+    """
+    if isinstance(value, _UTF8_TYPES):
+        return value
+    if not isinstance(value, unicode):
+        raise TypeError(
+            "Expected bytes, unicode, or None; got %r" % type(value)
+        )
+    return value.encode("utf-8")

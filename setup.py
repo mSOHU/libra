@@ -30,5 +30,6 @@ setup(
         'urllib3==1.14.dev1',
         'http2==0.2.2',
         'pyyaml',
+        'pyzmq==15.2.0',
     ],
 )

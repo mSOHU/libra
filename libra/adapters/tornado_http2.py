@@ -6,7 +6,6 @@
 """
 
 import logging
-import functools
 
 import http2
 from tornado import httpclient
@@ -16,9 +15,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class LibraAsyncHTTP2Client(object):
-    def __init__(self, manager=None, placeholder='__node__', **conn_kwargs):
+    def __init__(self, manager=None, **conn_kwargs):
         self.manager = manager
-        self.placeholder = placeholder
 
         conn_kwargs.pop('host', None)
         conn_kwargs['force_instance'] = True
@@ -28,8 +26,7 @@ class LibraAsyncHTTP2Client(object):
             for node in self.manager._weight_node
         }
 
-    def fetch(self, request, callback, **kwargs):
-        @functools.wraps(callback)
+    def fetch(self, request, callback=None, **kwargs):
         def wrapper(response):
             error = response.error
             if error and isinstance(error, httpclient.HTTPError) and error.code == 599:
