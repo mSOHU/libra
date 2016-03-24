@@ -47,11 +47,13 @@ class ZmqSocketWatcher(object):
             return self.endpoint
         elif self.strategy == 'all':
             for old_endpoint in old_endpoint_list:
-                try:
-                    self.socket.disconnect(old_endpoint)
-                except zmq.ZMQError:
-                    pass
+                if old_endpoint not in endpoint_list:
+                    try:
+                        self.socket.disconnect(old_endpoint)
+                    except zmq.ZMQError:
+                        pass
 
             self.endpoint_list = endpoint_list
             for endpoint in self.endpoint_list:
-                self.socket.connect(endpoint)
+                if endpoint not in old_endpoint_list:
+                    self.socket.connect(endpoint)
