@@ -17,7 +17,7 @@ from libra.service import ServiceWatcher
 LOGGER = logging.getLogger(__name__)
 
 
-class ZmqSocket(object):
+class ZmqSocketWatcher(object):
     """etcd-controlled-endpoints dynamic socket
     """
     def __init__(self, service_name, strategy, socket):

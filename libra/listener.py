@@ -14,8 +14,7 @@ from collections import defaultdict
 
 import zmq
 
-from libra.watcher import Watcher
-from libra.utils import rr_choice
+from libra.services.zmq_socket import ZmqSocketWatcher
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,58 +22,25 @@ LOGGER = logging.getLogger(__name__)
 class _Listener(object):
     """listens stateless event from zmq, the delivery is NOT guaranteed.
     """
-    SERVICE_PATH = '/services/zmq'
-
     def __init__(self):
-        self.watcher = Watcher(
-            self.SERVICE_PATH,
-            change_callback=self.on_service_change,
-            init_callback=self.on_service_init,
-        )
-
         # zmq
         self.context = zmq.Context()
         subscriber = self.subscriber = self.context.socket(zmq.SUB)
         subscriber.setsockopt(zmq.RCVTIMEO, 30000)
 
+        self.watcher = ZmqSocketWatcher(
+            service_name='zmq',
+            strategy='choice',
+            socket=self.subscriber
+        )
+
         self.callbacks = defaultdict(list)
         self.prefixes = []
-
-        self.endpoint_list = None
-        self.endpoint = None
 
         # listener thread
         self.listen_thread = threading.Thread(target=self._listen_fn)
         self.listen_thread.daemon = True
-
-    def on_service_change(self, key, value, **kwargs):
-        if key[1:] == 'endpoints':
-            self.endpoint_list = json.loads(value)['endpoints']
-
-            # if current endpoint not in new endpoint list, then we requires rebuild the context
-            if self.endpoint not in self.endpoint_list:
-                self.switch_endpoint(rr_choice(self.endpoint_list))
-                LOGGER.info('Listening at endpoint: %s, prefix: %r' % (
-                    self.endpoint,
-                    [prefix for prefix, value in self.callbacks.items() if value]
-                ))
-
-    def on_service_init(self, root):
-        for node in root.leaves:
-            self.on_service_change(node.key[len(self.SERVICE_PATH):], node.value)
-
         self.listen_thread.start()
-
-    def switch_endpoint(self, endpoint):
-        self.endpoint, old_endpoint = endpoint, self.endpoint
-
-        try:
-            if old_endpoint:
-                self.subscriber.disconnect(old_endpoint)
-        except zmq.ZMQError:
-            pass
-
-        self.subscriber.connect(self.endpoint)
 
     def _listen_fn(self):
         while True:
