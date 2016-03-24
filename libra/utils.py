@@ -8,6 +8,7 @@
 
 import os
 import random
+import socket
 import logging
 import functools
 
@@ -100,3 +101,12 @@ def utf8(value):
             "Expected bytes, unicode, or None; got %r" % type(value)
         )
     return value.encode("utf-8")
+
+
+def local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('10.10.10.10', 80))
+    ip_addr = s.getsockname()[0]
+    s.close()
+
+    return ip_addr

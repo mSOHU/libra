@@ -79,7 +79,7 @@ class _Listener(object):
     def _listen_fn(self):
         while True:
             try:
-                routing_key, contents = self.subscriber.recv_multipart()
+                routing_key, headers, contents = self.subscriber.recv_multipart()
             except zmq.Again:
                 continue
             except Exception as err:
@@ -89,15 +89,23 @@ class _Listener(object):
             else:
                 for callback, json_decode in self.callbacks[routing_key]:
                     try:
+                        headers = json.loads(headers)
+
                         if json_decode:
                             contents = json.loads(contents)
-
-                        callback(routing_key=routing_key, payload=contents)
-                    except Exception as err:
+                    except (TypeError, ValueError) as err:
                         LOGGER.exception(
-                            'Exception %r while invoking callback %s:%r',
-                            err, routing_key, callback
+                            'Exception %r while decoding message: %r, %r, %s',
+                            err, routing_key, headers, contents
                         )
+                    else:
+                        try:
+                            callback(routing_key=routing_key, headers=headers, payload=contents)
+                        except Exception as err:
+                            LOGGER.exception(
+                                'Exception %r while invoking callback %s:%r',
+                                err, routing_key, callback
+                            )
 
     def listen(self, routing_keys, json_decode=False):
         # only str is acceptable

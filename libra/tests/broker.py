@@ -16,6 +16,6 @@ init_logging(standalone=True)
 instance = ZmqPublisher.get_instance()
 
 while True:
-    instance.publish('A', 'hi there')
+    instance.publish('A', 'hi there', headers={'src': 'oh!'})
     time.sleep(1)
 

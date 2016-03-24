@@ -12,7 +12,7 @@ import logging
 import zmq
 
 from libra.watcher import Watcher
-from libra.utils import utf8
+from libra.utils import utf8, local_ip
 
 
 LOGGER = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ class ZmqPublisher(object):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUB)
         self.publisher = None
+        self.sender_ip = local_ip()
 
     def _on_leader_init(self, root):
         self._on_leader_change(value=root.value)
@@ -51,13 +52,16 @@ class ZmqPublisher(object):
         self.socket.connect(self.publisher)
         LOGGER.info('Leader pointed to %s.', self.publisher)
 
-    def publish(self, routing_key, message):
+    def publish(self, routing_key, message, headers=None):
         if not isinstance(message, basestring):
             message = json.dumps(message)
         else:
             message = utf8(message)
 
-        self.socket.send_multipart([routing_key, message])
+        headers = headers or {}
+        assert isinstance(headers, dict), 'Invalid header type: %s' % type(headers)
+        headers.setdefault('sender_ip', self.sender_ip)
+        self.socket.send_multipart([routing_key, json.dumps(headers), message])
 
     @classmethod
     def get_instance(cls):

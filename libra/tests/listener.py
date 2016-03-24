@@ -14,8 +14,8 @@ init_logging(standalone=True)
 
 
 @listen('A')
-def listener(routing_key, payload, **_):
-    print '[+] event received: %s:%s' % (routing_key, payload)
+def listener(routing_key, payload, headers, **_):
+    print '[+] event received: %s, %s: %s' % (routing_key, headers, payload)
 
 
 raw_input('Waiting for events...')
