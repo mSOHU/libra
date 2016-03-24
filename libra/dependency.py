@@ -22,7 +22,7 @@ class ServiceUnavailable(Exception):
         self.services = services
 
 
-class ServiceManager(object):
+class DependencyManager(object):
     """
     @manager.depends('redis.main_read')
     def test():
