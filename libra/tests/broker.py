@@ -8,12 +8,12 @@
 
 import time
 
-from libra.services.zmq_broker import ZmqPublisher
+from libra.services.zmq_broker import ZmqBroker
 from libra.utils import init_logging
 
 
 init_logging(standalone=True)
-instance = ZmqPublisher.get_instance()
+instance = ZmqBroker.get_instance()
 
 while True:
     instance.publish('A', 'hi there', headers={'src': 'oh!'})

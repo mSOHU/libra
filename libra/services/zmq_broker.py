@@ -18,7 +18,7 @@ from libra.utils import utf8, local_ip
 LOGGER = logging.getLogger(__name__)
 
 
-class ZmqPublisher(object):
+class ZmqBroker(object):
     LEADER_PATH = '/services/zmq/leader'
     INSTANCE = None
 
@@ -66,7 +66,7 @@ class ZmqPublisher(object):
     @classmethod
     def get_instance(cls):
         """
-        :rtype: ZmqPublisher
+        :rtype: ZmqBroker
         """
 
         if not cls.INSTANCE:
