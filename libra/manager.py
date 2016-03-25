@@ -26,7 +26,7 @@ class WeightNodes(BaseManager):
     """按权重返回node
     """
     COST_HISTORY_COUNT = 100
-    MAX_STEP = 1000000000
+    MAX_STEP = 2 ** 32
 
     def __init__(self, weight_table, recovery_num=1000):
         """
@@ -59,7 +59,8 @@ class WeightNodes(BaseManager):
         random.shuffle(self._live_nodes)
 
     def get_node(self):
-        self._step = (self._step + 1) % self.MAX_STEP
+        self._step += 1
+        self._step ^= self.MAX_STEP
 
         # 重试机制
         if self._fail and self._step % self._recovery_num == 0:
