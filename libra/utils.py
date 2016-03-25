@@ -10,6 +10,7 @@ import os
 import random
 import socket
 import logging
+import urlparse
 import functools
 
 import etcd
@@ -110,3 +111,11 @@ def local_ip():
     s.close()
 
     return ip_addr
+
+
+def extract_netloc(url, without_port=False):
+    netloc = urlparse.urlparse(url).netloc
+    if without_port and ':' in netloc:
+        return netloc.rsplit(':', 1)[0]
+
+    return netloc
