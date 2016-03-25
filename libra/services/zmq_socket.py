@@ -11,7 +11,7 @@ import logging
 import zmq
 
 from libra.utils import rr_choice
-from libra.service import ServiceWatcher
+from libra.endpoint import EndpointWatcher
 
 
 LOGGER = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class ZmqSocketWatcher(object):
         self.endpoint = None
         self.endpoint_list = []
 
-        self.watcher = ServiceWatcher(
+        self.watcher = EndpointWatcher(
             service_name=service_name,
             strategy=strategy,
             switch_callback=self.switch_endpoint

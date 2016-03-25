@@ -15,7 +15,7 @@ from libra.watcher import Watcher
 LOGGER = logging.getLogger(__name__)
 
 
-class ServiceWatcher(object):
+class EndpointWatcher(object):
     SERVICE_BASE = '/services/%s/endpoints'
 
     def __init__(self, service_name, strategy, switch_callback):

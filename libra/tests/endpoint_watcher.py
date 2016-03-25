@@ -6,7 +6,7 @@
 @date: 3/24/2016 5:40 PM
 """
 
-from libra.service import ServiceWatcher
+from libra.endpoint import EndpointWatcher
 from libra.utils import init_logging, rr_choice
 
 
@@ -17,7 +17,7 @@ def switch_callback(**kwargs):
     print kwargs
 
 
-ServiceWatcher('test', 'all', switch_callback)
+EndpointWatcher('test', 'all', switch_callback)
 
 
 def switch_callback_choice(**kwargs):
@@ -25,6 +25,6 @@ def switch_callback_choice(**kwargs):
     return rr_choice(kwargs['endpoint_list'])
 
 
-ServiceWatcher('test', 'choice', switch_callback_choice)
+EndpointWatcher('test', 'choice', switch_callback_choice)
 
 raw_input('')
