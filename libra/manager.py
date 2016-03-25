@@ -44,7 +44,7 @@ class WeightNodes(BaseManager):
         for k, v in weight_table.iteritems():
             self._weight_node[k] = v
             self._live.add(k)
-            self._live_nodes += [k] * v
+            self._live_nodes.extend([k] * v)
             self._node_counter[k] = {
                 'get': 0,
                 'release': 0,
@@ -84,7 +84,7 @@ class WeightNodes(BaseManager):
             self._fail.remove(node)
             self._live.add(node)
             v = self._weight_node[node]
-            self._live_nodes += [node] * v
+            self._live_nodes.extend([node] * v)
             self._live_len = len(self._live_nodes)
             random.shuffle(self._live_nodes)
             logger.info(u'恢复node:%s' % node)
@@ -99,7 +99,7 @@ class WeightNodes(BaseManager):
         if node in self._live:
             self._fail.add(node)
             self._live.remove(node)
-            self._live_nodes = filter(lambda x: x != node, self._live_nodes)
+            self._live_nodes[:] = filter(lambda x: x != node, self._live_nodes)
             self._live_len = len(self._live_nodes)
             random.shuffle(self._live_nodes)
 
