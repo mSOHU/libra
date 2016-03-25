@@ -51,7 +51,7 @@ def get_etcd():
     return _ETCD_CLIENT
 
 
-def init_logging(standalone=False):
+def init_logging(standalone=False, module_name='libra'):
     if standalone:
         formatter = logging.Formatter(
             '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d] %(message)s',
@@ -61,7 +61,7 @@ def init_logging(standalone=False):
         handler.setFormatter(formatter)
         handler.setLevel(logging.DEBUG)
 
-        logger = logging.getLogger('libra')
+        logger = logging.getLogger(module_name)
         logger.setLevel(logging.INFO)
         logger.propagate = False
         logger.addHandler(handler)
