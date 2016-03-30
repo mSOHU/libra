@@ -10,6 +10,7 @@ import os
 import random
 import socket
 import logging
+import urlparse
 import functools
 
 import etcd
@@ -51,7 +52,7 @@ def get_etcd():
     return _ETCD_CLIENT
 
 
-def init_logging(standalone=False):
+def init_logging(standalone=False, module_name='libra'):
     if standalone:
         formatter = logging.Formatter(
             '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d] %(message)s',
@@ -61,7 +62,7 @@ def init_logging(standalone=False):
         handler.setFormatter(formatter)
         handler.setLevel(logging.DEBUG)
 
-        logger = logging.getLogger('libra')
+        logger = logging.getLogger(module_name)
         logger.setLevel(logging.INFO)
         logger.propagate = False
         logger.addHandler(handler)
@@ -110,3 +111,11 @@ def local_ip():
     s.close()
 
     return ip_addr
+
+
+def extract_netloc(url, without_port=False):
+    netloc = urlparse.urlparse(url).netloc
+    if without_port and ':' in netloc:
+        return netloc.rsplit(':', 1)[0]
+
+    return netloc

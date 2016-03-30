@@ -10,9 +10,9 @@ import time
 import random
 
 from libra.utils import init_logging
-from libra.service import ServiceManager
+from libra.dependency import DependencyManager
 
-manager = ServiceManager('develop')
+manager = DependencyManager('develop')
 
 
 @manager.depends('redis.main_read')

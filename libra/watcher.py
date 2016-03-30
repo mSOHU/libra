@@ -58,7 +58,7 @@ class Watcher(object):
             except Exception as err:
                 LOGGER.exception('%r, while watching service status', err)
                 # avoid potential dead loop
-                time.sleep(.2)
+                time.sleep(2)
                 continue
             else:
                 self.on_change(item)
