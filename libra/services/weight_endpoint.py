@@ -54,6 +54,22 @@ class WeightEndpoints(BaseManager):
     def _switch_endpoint(self, endpoint_list, old_endpoint_list, **_):
         self._ready.clear()
 
+        try:
+            weight_table = calc_weight(
+                local_ip=local_ip(),
+                remote_nodes={
+                    extract_netloc(endpoint, without_port=True): endpoint
+                    for endpoint in endpoint_list
+                    if endpoint not in old_endpoint_list
+                },
+                **self.weight_kwargs
+            )
+        except Exception as err:
+            logger.exception('Unable to calculate weight table, %r', err)
+            return
+        finally:
+            self._ready.set()
+
         for endpoint in old_endpoint_list:
             self._node_counter[endpoint]['state'] = 'removed'
             if endpoint not in endpoint_list:
@@ -68,15 +84,6 @@ class WeightEndpoints(BaseManager):
                 self._live_nodes[:] = filter(lambda x: x != endpoint, self._live_nodes)
                 self._live_len = len(self._live_nodes)
 
-        weight_table = calc_weight(
-            local_ip=local_ip(),
-            remote_nodes={
-                extract_netloc(endpoint, without_port=True): endpoint
-                for endpoint in endpoint_list
-                if endpoint not in old_endpoint_list
-            },
-            **self.weight_kwargs
-        )
         for endpoint, weight in weight_table.iteritems():
             self._weight_node[endpoint] = weight
             self._live.add(endpoint)
