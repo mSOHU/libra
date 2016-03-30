@@ -9,6 +9,7 @@
 import time
 import random
 import logging
+import threading
 from collections import deque, defaultdict
 
 from libra.weight import calc_weight
@@ -39,6 +40,7 @@ class WeightEndpoints(BaseManager):
         self._fail = set()
         self._recovery_num = recovery_num
         self._node_counter = defaultdict(dict)
+        self._ready = threading.Event()
 
         # dynamic service
         self.service_name = service_name
@@ -50,11 +52,19 @@ class WeightEndpoints(BaseManager):
         )
 
     def _switch_endpoint(self, endpoint_list, old_endpoint_list, **_):
+        self._ready.clear()
+
         for endpoint in old_endpoint_list:
             self._node_counter[endpoint]['state'] = 'removed'
             if endpoint not in endpoint_list:
-                self._fail.remove(endpoint)
-                self._live.remove(endpoint)
+                try:
+                    self._fail.remove(endpoint)
+                except KeyError:
+                    pass
+                try:
+                    self._live.remove(endpoint)
+                except KeyError:
+                    pass
                 self._live_nodes[:] = filter(lambda x: x != endpoint, self._live_nodes)
                 self._live_len = len(self._live_nodes)
 
@@ -84,8 +94,13 @@ class WeightEndpoints(BaseManager):
 
         self._live_len = len(self._live_nodes)
         random.shuffle(self._live_nodes)
+        self._ready.set()
+
+    def _wait_ready(self, timeout=None):
+        self._ready.wait(timeout)
 
     def get_node(self):
+        self._wait_ready()
         self._step += 1
         self._step ^= self.MAX_STEP
 
@@ -107,6 +122,7 @@ class WeightEndpoints(BaseManager):
         return node
 
     def release_node(self, node, time_cost=0):
+        self._wait_ready()
         if node in self._fail:
             self._fail.remove(node)
             self._live.add(node)
@@ -114,7 +130,7 @@ class WeightEndpoints(BaseManager):
             self._live_nodes.extend([node] * v)
             self._live_len = len(self._live_nodes)
             random.shuffle(self._live_nodes)
-            logger.info(u'恢复node:%s' % node)
+            logger.info('Endpoint [%s / %s] recovered.', self.service_name, node)
 
         node_counter = self._node_counter[node]
         node_counter['release'] += 1
@@ -137,10 +153,11 @@ class WeightEndpoints(BaseManager):
         node_counter['state'] = 'fail'
         node_counter['last_fail'] = time.time()
 
-        logger.info(u'剔除node:%s' % node)
+        logger.info('Endpoint [%s / %s] marked as down.', self.service_name, node)
 
         if not self._live_nodes:
-            logger.error(u"所有节点都失败了，请立刻检测")
+            logger.error(
+                'All endpoints failed! Service %s', self.service_name)
 
     def get_node_counter(self):
         return self._node_counter
