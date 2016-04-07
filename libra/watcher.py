@@ -83,6 +83,10 @@ class Watcher(object):
 
     @classmethod
     def calc_max_index(cls, root):
+        # @see: https://github.com/coreos/etcd/blob/master/Documentation/api.md#watch-from-cleared-event-index
+        if hasattr(root, 'etcd_index'):
+            return root.etcd_index
+
         max_index = root.modifiedIndex
         for item in root.leaves:
             max_index = max(max_index, item.modifiedIndex)
