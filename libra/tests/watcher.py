@@ -15,8 +15,8 @@ from libra.watcher import watch
 
 
 @watch('/fragments')
-def watch_fragments(action, key, value):
-    print action, key, value
+def watch_fragments(action, key, value, prev_value, **_):
+    print action, key, value, prev_value, _
 
 
 if __name__ == '__main__':
