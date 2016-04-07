@@ -76,8 +76,18 @@ class Watcher(object):
         assert item_key.startswith(self.watch_path)
 
         item_key = item_key[len(self.watch_path):]
+        change_kwargs = {
+            'action': item.action,
+            'key': item_key,
+            'value': item.value,
+            'is_dir': item.dir
+        }
+
+        if hasattr(item, '_prev_node'):
+            change_kwargs['prev_value'] = item._prev_node.value
+
         try:
-            self.change_callback(action=item.action, key=item_key, value=item.value, is_dir=item.dir)
+            self.change_callback(**change_kwargs)
         except Exception as err:
             LOGGER.exception('Exception %r while invoking callback %r', err, self.change_callback)
 
