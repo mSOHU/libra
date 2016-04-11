@@ -19,15 +19,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Watcher(object):
-    def __init__(self, path, change_callback, init_callback=None, prefix=None):
+    def __init__(
+            self, path, change_callback, init_callback=None,
+            prefix=None, sync_mode=False):
         self.prefix = prefix
         self.change_callback = change_callback
         self.init_callback = init_callback
         self.server = get_etcd()
         self.watch_path = '%s/%s' % (path, prefix) if prefix else path
-        self.watcher_thread = threading.Thread(target=self._watcher_fn)
-        self.watcher_thread.daemon = True
-        self.watcher_thread.start()
+
+        self.sync_mode = sync_mode
+        if not self.sync_mode:
+            self.watcher_thread = threading.Thread(target=self._watcher_fn)
+            self.watcher_thread.daemon = True
+            self.watcher_thread.start()
 
     def read_root(self):
         return self.server.read(self.watch_path, recursive=True)
@@ -93,6 +98,12 @@ class Watcher(object):
             self.change_callback(**change_kwargs)
         except Exception as err:
             LOGGER.exception('Exception %r while invoking callback %r', err, self.change_callback)
+
+    def loop_forever(self):
+        if self.sync_mode:
+            return self._watcher_fn()
+        else:
+            self.watcher_thread.join()
 
     @classmethod
     def calc_max_index(cls, root):
