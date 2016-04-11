@@ -29,8 +29,11 @@ class Watcher(object):
         self.watcher_thread.daemon = True
         self.watcher_thread.start()
 
+    def read_root(self):
+        return self.server.read(self.watch_path, recursive=True)
+
     def _watcher_fn(self):
-        initial_item = self.server.read(self.watch_path, recursive=True)
+        initial_item = self.read_root()
         if callable(self.init_callback):
             # we don't process exceptions, because this means coding issue
             try:
@@ -51,8 +54,7 @@ class Watcher(object):
             except etcd.EtcdEventIndexCleared as err:
                 new_index = err.payload['index']
                 LOGGER.info('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
-                root = self.server.read(self.watch_path, recursive=True)
-                self.resync_statuses(root, current_index)
+                self.resync_statuses(current_index)
                 current_index = new_index
                 continue
             except Exception as err:
@@ -64,7 +66,8 @@ class Watcher(object):
                 self.on_change(item)
                 current_index = item.modifiedIndex + 1
 
-    def resync_statuses(self, root, current):
+    def resync_statuses(self, current):
+        root = self.read_root()
         for item in root.leaves:
             if current >= item.modifiedIndex:
                 continue
