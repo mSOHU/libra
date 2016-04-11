@@ -128,9 +128,9 @@ class Watcher(object):
         return max_index
 
     @classmethod
-    def watch(cls, path, prefix=None):
+    def watch(cls, path, prefix=None, **kwargs):
         def decorator(fn):
-            cls(path, fn, prefix)
+            cls(path, fn, prefix=prefix, **kwargs)
             return fn
 
         return decorator
