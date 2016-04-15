@@ -19,22 +19,34 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Watcher(object):
-    def __init__(self, path, change_callback, init_callback=None, prefix=None):
+    def __init__(
+            self, path, change_callback, init_callback=None,
+            prefix=None, sync_mode=False, final_state=False):
+        """`final_state` indicates ignoring the transition process,
+        just jump to the final state
+        """
         self.prefix = prefix
         self.change_callback = change_callback
         self.init_callback = init_callback
         self.server = get_etcd()
         self.watch_path = '%s/%s' % (path, prefix) if prefix else path
-        self.watcher_thread = threading.Thread(target=self._watcher_fn)
-        self.watcher_thread.daemon = True
-        self.watcher_thread.start()
+
+        self.final_state = final_state
+        self.sync_mode = sync_mode
+        if not self.sync_mode:
+            self.watcher_thread = threading.Thread(target=self._watcher_fn)
+            self.watcher_thread.daemon = True
+            self.watcher_thread.start()
+
+    def read_root(self):
+        return self.server.read(self.watch_path, recursive=True)
 
     def _watcher_fn(self):
-        initial_item = self.server.read(self.watch_path, recursive=True)
+        initial_item = self.read_root()
         if callable(self.init_callback):
             # we don't process exceptions, because this means coding issue
             try:
-                self.init_callback(initial_item)
+                self.init_callback(root=initial_item)
             except Exception as err:
                 LOGGER.exception('%r, while invoking init_callback', err)
                 return
@@ -51,8 +63,7 @@ class Watcher(object):
             except etcd.EtcdEventIndexCleared as err:
                 new_index = err.payload['index']
                 LOGGER.info('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
-                root = self.server.read(self.watch_path, recursive=True)
-                self.resync_statuses(root, current_index)
+                self.resync_statuses(current_index)
                 current_index = new_index
                 continue
             except Exception as err:
@@ -61,35 +72,48 @@ class Watcher(object):
                 time.sleep(2)
                 continue
             else:
-                self.on_change(item)
-                current_index = item.modifiedIndex + 1
+                if self.final_state:
+                    root = self.read_root()
+                    # passing item is meaningless
+                    self.on_change(root, root=root)
+                    current_index = self.calc_max_index(root) + 1
+                else:
+                    self.on_change(item)
+                    current_index = item.modifiedIndex + 1
 
-    def resync_statuses(self, root, current):
+    def resync_statuses(self, current):
+        root = self.read_root()
         for item in root.leaves:
             if current >= item.modifiedIndex:
                 continue
 
             self.on_change(item)
 
-    def on_change(self, item):
+    def on_change(self, item, **kwargs):
         item_key = item.key
         assert item_key.startswith(self.watch_path)
 
         item_key = item_key[len(self.watch_path):]
-        change_kwargs = {
+        kwargs.update({
             'action': item.action,
             'key': item_key,
             'value': item.value,
             'is_dir': item.dir
-        }
+        })
 
         if hasattr(item, '_prev_node'):
-            change_kwargs['prev_value'] = item._prev_node.value
+            kwargs['prev_value'] = item._prev_node.value
 
         try:
-            self.change_callback(**change_kwargs)
+            self.change_callback(**kwargs)
         except Exception as err:
             LOGGER.exception('Exception %r while invoking callback %r', err, self.change_callback)
+
+    def loop_forever(self):
+        if self.sync_mode:
+            return self._watcher_fn()
+        else:
+            self.watcher_thread.join()
 
     @classmethod
     def calc_max_index(cls, root):
@@ -104,9 +128,9 @@ class Watcher(object):
         return max_index
 
     @classmethod
-    def watch(cls, path, prefix=None):
+    def watch(cls, path, prefix=None, **kwargs):
         def decorator(fn):
-            cls(path, fn, prefix)
+            cls(path, fn, prefix=prefix, **kwargs)
             return fn
 
         return decorator
