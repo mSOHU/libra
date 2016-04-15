@@ -46,7 +46,7 @@ class Watcher(object):
         if callable(self.init_callback):
             # we don't process exceptions, because this means coding issue
             try:
-                self.init_callback(initial_item)
+                self.init_callback(root=initial_item)
             except Exception as err:
                 LOGGER.exception('%r, while invoking init_callback', err)
                 return
