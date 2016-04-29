@@ -26,7 +26,7 @@ class WeightNodes(BaseManager):
     """按权重返回node
     """
     COST_HISTORY_COUNT = 100
-    MAX_STEP = 2 ** 32
+    MAX_STEP = 2 ** 32 - 1
 
     def __init__(self, weight_table, recovery_num=1000):
         """
@@ -60,7 +60,7 @@ class WeightNodes(BaseManager):
 
     def get_node(self):
         self._step += 1
-        self._step ^= self.MAX_STEP
+        self._step &= self.MAX_STEP
 
         # 重试机制
         if self._fail and self._step % self._recovery_num == 0:
