@@ -28,8 +28,10 @@ setup(
     install_requires=[
         'python-etcd==0.4.3',
         'urllib3==1.14.dev1',
-        'http2==0.2.2',
         'pyyaml',
         'pyzmq==15.2.0',
     ],
+    extras_require={
+        'http2': ['http2==0.2.2'],
+    },
 )
