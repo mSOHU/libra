@@ -26,7 +26,7 @@ setup(
         'libra': ['conf/config.yaml']
     },
     install_requires=[
-        'python-etcd==0.4.3',
+        'python-etcd==0.4.4.dev0',
         'urllib3==1.14.dev1',
         'pyyaml',
         'pyzmq==15.2.0',
