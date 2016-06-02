@@ -9,6 +9,7 @@ import logging
 
 import http2
 from tornado import httpclient
+from libra.utils import extract_netloc
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,10 +22,7 @@ class LibraAsyncHTTP2Client(object):
         conn_kwargs.pop('host', None)
         conn_kwargs['force_instance'] = True
         self.conn_kwargs = conn_kwargs
-        self.clients = {
-            node: http2.SimpleAsyncHTTP2Client(host=node, **self.conn_kwargs)
-            for node in self.manager._weight_node
-        }
+        self.clients = {}
 
     def fetch(self, request, callback=None, **kwargs):
         def wrapper(response):
@@ -39,4 +37,9 @@ class LibraAsyncHTTP2Client(object):
 
         node = self.manager.get_node()
         LOGGER.debug('LIBRA: got node, %s', node)
-        return self.clients[node].fetch(request, wrapper, **kwargs)
+        client = self.clients.get(node)
+        if not client:
+            node_ip = extract_netloc(node)
+            client = http2.SimpleAsyncHTTP2Client(host=node_ip, **self.conn_kwargs)
+            self.clients[node] = client
+        return client.fetch(request, wrapper, **kwargs)
