@@ -114,6 +114,9 @@ def local_ip():
 
 
 def extract_netloc(url, without_port=False):
+    # Scheme should be presented in url. if not, origin url will be returned.
+    if ':' not in url:
+        return url
     netloc = urlparse.urlparse(url).netloc
     if without_port and ':' in netloc:
         return netloc.rsplit(':', 1)[0]
