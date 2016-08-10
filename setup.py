@@ -3,7 +3,6 @@
 import re
 from setuptools import setup, find_packages
 
-
 # Get the version
 version_regex = r'__version__ = ["\']([^"\']*)["\']'
 with open('libra/__init__.py', 'r') as f:
@@ -23,7 +22,7 @@ setup(
     url='http://m.sohu.com/',
     packages=find_packages(exclude=["*.pyc"]),
     package_data={
-        'libra': ['conf/config.yaml']
+        'libra': ['conf/*.yaml']
     },
     install_requires=[
         'python-etcd==0.4.4.dev0',
