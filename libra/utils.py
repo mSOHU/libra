@@ -17,8 +17,7 @@ import etcd
 import yaml
 
 
-PKG_PATH = ROOT_PATH = os.path.join(os.path.dirname(__file__))
-make_path = functools.partial(os.path.join, ROOT_PATH)
+PKG_PATH = os.path.join(os.path.dirname(__file__))
 make_pkg_path = functools.partial(os.path.join, PKG_PATH)
 
 
@@ -44,7 +43,7 @@ def get_etcd():
     """
     global _ETCD_CLIENT
     if _ETCD_CLIENT is None:
-        servers = [(host, port) for host, port in get_conf('etcd.server')]
+        servers = map(tuple, get_conf('etcd.servers'))
         random.shuffle(servers)
         _ETCD_CLIENT = etcd.Client(
             tuple(servers), **get_conf('etcd.settings')
