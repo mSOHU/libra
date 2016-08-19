@@ -33,5 +33,6 @@ setup(
     ],
     extras_require={
         'http2': ['http2==0.2.4rc3'],
+        'consistent_statsd': ['hash_ring==1.3.1', 'statsd==3.2.1'],
     },
 )
