@@ -32,6 +32,6 @@ setup(
         'pyzmq==15.2.0',
     ],
     extras_require={
-        'http2': ['http2==0.2.4rc0'],
+        'http2': ['http2==0.2.4rc3'],
     },
 )
