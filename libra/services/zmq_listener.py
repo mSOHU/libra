@@ -19,17 +19,21 @@ from libra.services.zmq_socket import ZmqSocketWatcher
 LOGGER = logging.getLogger(__name__)
 
 
-class _ZmqListener(object):
+class ZmqListener(object):
     """listens stateless event from zmq, the delivery is NOT guaranteed.
     """
-    def __init__(self):
+    SERVICE_NAME = 'zmq:broker'
+
+    def __init__(self, profile):
         # zmq
         self.context = zmq.Context()
         subscriber = self.subscriber = self.context.socket(zmq.SUB)
         subscriber.setsockopt(zmq.RCVTIMEO, 30000)
 
+        self.profile = profile
         self.watcher = ZmqSocketWatcher(
-            service_name='zmq',
+            service_name=self.SERVICE_NAME,
+            profile=self.profile,
             strategy='choice',
             socket=self.subscriber
         )
@@ -89,7 +93,3 @@ class _ZmqListener(object):
                 self.callbacks[routing_key].append((fn, json_decode))
 
         return decorator
-
-
-ZmqListener = _ZmqListener()
-listen = ZmqListener.listen
