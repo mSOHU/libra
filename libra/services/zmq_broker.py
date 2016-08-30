@@ -20,11 +20,13 @@ LOGGER = logging.getLogger(__name__)
 
 class ZmqBroker(object):
     LEADER_PATH = '/services/zmq/leader'
-    INSTANCE = None
+    INSTANCES = {}
 
-    def __init__(self):
+    def __init__(self, profile):
+        self.profile = profile
         self.watcher = Watcher(
             self.LEADER_PATH,
+            profile=self.profile,
             change_callback=self._on_leader_change,
             init_callback=self._on_leader_init,
         )
@@ -64,12 +66,12 @@ class ZmqBroker(object):
         self.socket.send_multipart([routing_key, json.dumps(headers), message])
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, profile):
         """
         :rtype: ZmqBroker
         """
+        instance = cls.INSTANCES.get(profile)
+        if not instance:
+            instance = cls.INSTANCES[profile] = cls(profile=profile)
 
-        if not cls.INSTANCE:
-            cls.INSTANCE = cls()
-
-        return cls.INSTANCE
+        return instance
