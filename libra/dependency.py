@@ -40,14 +40,14 @@ class DependencyManager(object):
     """
     SERVICES_PATH = '/static-services'
 
-    def __init__(self, prefix=None):
-        self.prefix = prefix
+    def __init__(self, profile=None):
+        self.profile = profile
         self.statuses = defaultdict(lambda: 'unknown')
         self.watcher = Watcher(
             self.SERVICES_PATH,
+            profile=self.profile,
             change_callback=self.on_change,
             init_callback=self.init_statuses,
-            prefix=prefix
         )
 
     def depends(self, *services):
@@ -108,11 +108,13 @@ class DependencyManager(object):
         log_fn('service status changed: `%s` [%s] -> [%s]', service_name, old_value, new_value)
         self.statuses[service_name] = new_value
 
-    def set_status(self, service_name, new_value):
+    @classmethod
+    def set_status(cls, service_name, profile, new_value):
         """set service status to server"""
-        self.watcher.server.set('%s/%s/%s/status' % (
-            self.SERVICES_PATH, self.prefix,
-            service_name.replace('.', '/')), new_value)
+        from libra.utils import get_etcd
+        status_path = '%s/%s/status' % (
+            cls.SERVICES_PATH, service_name.replace('.', '/'))
+        get_etcd(profile=profile).set(status_path, new_value)
 
     def get_statuses(self):
         return dict(self.statuses)

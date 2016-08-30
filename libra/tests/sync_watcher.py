@@ -14,12 +14,16 @@ from libra.utils import init_logging, get_etcd
 from libra.watcher import Watcher
 
 
-def watch_fragments(action, key, value, **_):
-    print action, key, value, _.get('prev_value'), _
+PROFILE = 'develop'
+
+
+def watch_fragments(action, key, value, **kwargs):
+    print action, key, value, kwargs.get('prev_value'), kwargs
     time.sleep(2)
 
 watcher = Watcher(
     '/fragments',
+    profile=PROFILE,
     change_callback=watch_fragments,
     final_state=True,
     # sync_mode=True,
@@ -28,7 +32,7 @@ watcher = Watcher(
 
 if __name__ == '__main__':
     init_logging(standalone=True)
-    etcd = get_etcd(profile='product')
+    etcd = get_etcd(profile=PROFILE)
     watcher.loop_forever()
     while True:
         time.sleep(2)

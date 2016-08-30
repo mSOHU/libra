@@ -20,18 +20,18 @@ LOGGER = logging.getLogger(__name__)
 
 class Watcher(object):
     def __init__(
-            self, path, change_callback, init_callback=None,
-            prefix=None, sync_mode=False, final_state=False):
-        """`final_state` indicates ignoring the transition process,
-        just jump to the final state
+            self, watch_path, profile, change_callback,
+            init_callback=None, sync_mode=False, final_state=False):
         """
-        self.prefix = prefix
+        :param final_state: indicates ignoring the transition process,
+                             just jump to the final state
+        """
+        self.profile = profile
+        self.watch_path = watch_path
         self.change_callback = change_callback
         self.init_callback = init_callback
 
-        # FIXME: use real profile
-        self.server = get_etcd(profile='product')
-        self.watch_path = '%s/%s' % (path, prefix) if prefix else path
+        self.server = get_etcd(profile=self.profile)
 
         self.final_state = final_state
         self.sync_mode = sync_mode
@@ -134,9 +134,9 @@ class Watcher(object):
         return max_index
 
     @classmethod
-    def watch(cls, path, prefix=None, **kwargs):
+    def watch(cls, path, profile, **kwargs):
         def decorator(fn):
-            cls(path, fn, prefix=prefix, **kwargs)
+            cls(path, fn, profile=profile, **kwargs)
             return fn
 
         return decorator

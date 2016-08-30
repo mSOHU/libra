@@ -17,7 +17,12 @@ def switch_callback(**kwargs):
     print kwargs
 
 
-EndpointWatcher('test', 'all', switch_callback)
+EndpointWatcher(
+    service_name='test',
+    profile='develop',
+    strategy='all',
+    switch_callback=switch_callback
+)
 
 
 def switch_callback_choice(**kwargs):
@@ -25,6 +30,11 @@ def switch_callback_choice(**kwargs):
     return rr_choice(kwargs['endpoint_list'])
 
 
-EndpointWatcher('test', 'choice', switch_callback_choice)
+EndpointWatcher(
+    service_name='test',
+    profile='develop',
+    strategy='choice',
+    switch_callback=switch_callback_choice
+)
 
 raw_input('')
