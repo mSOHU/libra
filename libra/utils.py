@@ -43,21 +43,15 @@ def get_conf(name=None, sep='.', conf=None, profile='develop'):
     return _get_conf(name.split(sep), conf) if name else conf
 
 
-_ETCD_CLIENT = None
-
-
 def get_etcd(profile):
     """
     :rtype: etcd.Client
     """
-    global _ETCD_CLIENT
-    if _ETCD_CLIENT is None:
-        servers = map(tuple, get_conf('etcd.servers', profile=profile))
-        random.shuffle(servers)
-        _ETCD_CLIENT = etcd.Client(
-            tuple(servers), **get_conf('etcd.settings', profile=profile)
-        )
-    return _ETCD_CLIENT
+    servers = map(tuple, get_conf('etcd.servers', profile=profile))
+    random.shuffle(servers)
+    return etcd.Client(
+        tuple(servers), **get_conf('etcd.settings', profile=profile)
+    )
 
 
 def init_logging(standalone=False, module_name='libra'):
