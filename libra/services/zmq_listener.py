@@ -19,7 +19,7 @@ from libra.services.zmq_socket import ZmqSocketWatcher
 LOGGER = logging.getLogger(__name__)
 
 
-class _Listener(object):
+class _ZmqListener(object):
     """listens stateless event from zmq, the delivery is NOT guaranteed.
     """
     def __init__(self):
@@ -91,5 +91,5 @@ class _Listener(object):
         return decorator
 
 
-Listener = _Listener()
-listen = Listener.listen
+ZmqListener = _ZmqListener()
+listen = ZmqListener.listen
