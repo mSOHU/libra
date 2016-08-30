@@ -40,14 +40,14 @@ class DependencyManager(object):
     """
     SERVICES_PATH = '/static-services'
 
-    def __init__(self, prefix=None):
-        self.prefix = prefix
+    def __init__(self, profile=None):
+        self.profile = profile
         self.statuses = defaultdict(lambda: 'unknown')
         self.watcher = Watcher(
             self.SERVICES_PATH,
+            profile=profile,
             change_callback=self.on_change,
             init_callback=self.init_statuses,
-            prefix=prefix
         )
 
     def depends(self, *services):
@@ -110,9 +110,9 @@ class DependencyManager(object):
 
     def set_status(self, service_name, new_value):
         """set service status to server"""
-        self.watcher.server.set('%s/%s/%s/status' % (
-            self.SERVICES_PATH, self.prefix,
-            service_name.replace('.', '/')), new_value)
+        status_path = '%s/%s/status' % (
+            self.SERVICES_PATH, service_name.replace('.', '/'))
+        self.watcher.server.set(status_path, new_value)
 
     def get_statuses(self):
         return dict(self.statuses)

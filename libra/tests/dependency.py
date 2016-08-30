@@ -12,7 +12,7 @@ import random
 from libra.utils import init_logging
 from libra.dependency import DependencyManager
 
-manager = DependencyManager('develop')
+manager = DependencyManager(profile='develop')
 
 
 @manager.depends('redis.main_read')
