@@ -11,7 +11,7 @@ import logging
 import zmq
 
 from libra.utils import rr_choice, EtcdProfile
-from libra.endpoint import EndpointWatcher
+from libra.endpoint import EndpointWatcher, SwitchStrategy
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class ZmqSocketWatcher(object):
     def __init__(self, service_name, profile, strategy, socket):
         """
         :type profile: EtcdProfile
+        :type strategy: SwitchStrategy
         """
         self.service_name = service_name
         self.profile = profile
@@ -39,7 +40,7 @@ class ZmqSocketWatcher(object):
         )
 
     def switch_endpoint(self, old_endpoint_list, endpoint_list, old_endpoint=None, **_):
-        if self.strategy == 'choice':
+        if self.strategy == SwitchStrategy.CHOSEN:
             self.endpoint = rr_choice(endpoint_list)
 
             if old_endpoint:
@@ -50,7 +51,7 @@ class ZmqSocketWatcher(object):
 
             self.socket.connect(self.endpoint)
             return self.endpoint
-        elif self.strategy == 'all':
+        elif self.strategy == SwitchStrategy.ANY:
             for old_endpoint in old_endpoint_list:
                 if old_endpoint not in endpoint_list:
                     try:

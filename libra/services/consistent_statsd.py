@@ -14,7 +14,7 @@ import statsd
 import hash_ring
 
 from libra.utils import EtcdProfile
-from libra.endpoint import EndpointWatcher
+from libra.endpoint import EndpointWatcher, SwitchStrategy
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class ConsistentStatsdClient(object):
         self.watcher = EndpointWatcher(
             service_name=self.service_name,
             profile=self.profile,
-            strategy='all',
+            strategy=SwitchStrategy.ANY,
             switch_callback=self._switch_endpoint,
         )
 

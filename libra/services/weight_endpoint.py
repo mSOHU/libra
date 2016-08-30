@@ -14,7 +14,7 @@ from collections import deque, defaultdict
 
 from libra.weight import calc_weight
 from libra.manager import BaseManager
-from libra.endpoint import EndpointWatcher
+from libra.endpoint import EndpointWatcher, SwitchStrategy
 from libra.utils import local_ip, extract_netloc, EtcdProfile
 
 
@@ -50,7 +50,7 @@ class WeightEndpoints(BaseManager):
         self.watcher = EndpointWatcher(
             service_name=self.service_name,
             profile=self.service_name,
-            strategy='all',
+            strategy=SwitchStrategy.ANY,
             switch_callback=self._switch_endpoint,
         )
 
