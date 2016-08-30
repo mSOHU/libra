@@ -52,8 +52,6 @@ class WeightEndpoints(BaseManager):
         )
 
     def _switch_endpoint(self, endpoint_list, old_endpoint_list, **_):
-        self._ready.clear()
-
         try:
             weight_table = calc_weight(
                 local_ip=local_ip(),
@@ -67,8 +65,8 @@ class WeightEndpoints(BaseManager):
         except Exception as err:
             logger.exception('Unable to calculate weight table, %r', err)
             return
-        finally:
-            self._ready.set()
+
+        self._ready.clear()
 
         for endpoint in old_endpoint_list:
             self._node_counter[endpoint]['state'] = 'removed'

@@ -42,6 +42,9 @@ class Watcher(object):
         return self.server.read(self.watch_path, recursive=True)
 
     def _watcher_fn(self):
+        # delay thread start to avoid competition
+        time.sleep(0.1)
+
         initial_item = self.read_root()
         if callable(self.init_callback):
             # we don't process exceptions, because this means coding issue
