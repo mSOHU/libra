@@ -28,7 +28,9 @@ class Watcher(object):
         self.prefix = prefix
         self.change_callback = change_callback
         self.init_callback = init_callback
-        self.server = get_etcd()
+
+        # FIXME: use real profile
+        self.server = get_etcd(profile='product')
         self.watch_path = '%s/%s' % (path, prefix) if prefix else path
 
         self.final_state = final_state
@@ -66,6 +68,7 @@ class Watcher(object):
             except etcd.EtcdEventIndexCleared as err:
                 new_index = err.payload['index']
                 LOGGER.info('Etcd: %s [%u -> %u]', err.payload['cause'], current_index, new_index)
+                # TODO: if self.final_state:
                 self.resync_statuses(current_index)
                 current_index = new_index
                 continue
