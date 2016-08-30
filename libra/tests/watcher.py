@@ -10,11 +10,11 @@
 import time
 import random
 
-from libra.utils import init_logging, get_etcd
+from libra.utils import init_logging, get_etcd, EtcdProfile
 from libra.watcher import watch
 
 
-PROFILE = 'develop'
+PROFILE = EtcdProfile.DEVELOP
 
 
 @watch('/fragments', profile=PROFILE)

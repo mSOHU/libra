@@ -13,6 +13,7 @@ import threading
 import statsd
 import hash_ring
 
+from libra.utils import EtcdProfile
 from libra.endpoint import EndpointWatcher
 
 
@@ -27,8 +28,7 @@ class ConsistentStatsdClient(object):
 
     def __init__(self, service_name, profile):
         """
-        Args:
-            weight_table: 字典类型，权重对应表
+            :type profile: EtcdProfile
         """
         self.profile = profile
         self.endpoint_ring = None

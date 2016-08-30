@@ -10,6 +10,7 @@ import json
 import logging
 
 from libra.watcher import Watcher
+from libra.utils import EtcdProfile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ class EndpointWatcher(object):
 
     def __init__(self, service_name, profile, strategy, switch_callback):
         """
+        :type profile: EtcdProfile
         :param strategy: 'choice' or 'all', which means should we care
             choice endpoint change or just the one being chosen
         """

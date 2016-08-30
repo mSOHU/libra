@@ -9,11 +9,11 @@
 import time
 
 from libra.services.zmq_broker import ZmqBroker
-from libra.utils import init_logging
+from libra.utils import init_logging, EtcdProfile
 
 
 init_logging(standalone=True)
-instance = ZmqBroker.get_instance(profile='develop')
+instance = ZmqBroker.get_instance(profile=EtcdProfile.DEVELOP)
 
 while True:
     instance.publish('A', 'hi there', headers={'src': 'oh!'})

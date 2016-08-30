@@ -28,6 +28,7 @@ setup(
         'python-etcd==0.4.4.dev0',
         'urllib3==1.14.dev1',
         'pyyaml',
+        'enum34>=1.1.2',
     ],
     extras_require={
         'http2': ['http2>=0.2.4'],

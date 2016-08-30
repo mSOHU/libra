@@ -13,6 +13,7 @@ import logging
 import urlparse
 import functools
 
+import enum
 import etcd
 import yaml
 
@@ -21,15 +22,24 @@ PKG_PATH = os.path.join(os.path.dirname(__file__))
 make_pkg_path = functools.partial(os.path.join, PKG_PATH)
 
 
+@enum.unique
+class EtcdProfile(enum.Enum):
+    PRODUCT = 'product'
+    DEVELOP = 'develop'
+
+
 _CONFIGS = {}
 
 
 def load_config(profile):
+    """
+    :type profile: EtcdProfile
+    """
     if profile in _CONFIGS:
         return _CONFIGS[profile]
 
     config = _CONFIGS[profile] = yaml.load(
-        open(make_pkg_path('conf/%s.yaml' % profile), 'rb').read())
+        open(make_pkg_path('conf/%s.yaml' % profile.value), 'rb').read())
     return config
 
 
@@ -45,6 +55,7 @@ def get_conf(name=None, sep='.', conf=None, profile='develop'):
 
 def get_etcd(profile):
     """
+    :type profile: EtcdProfile
     :rtype: etcd.Client
     """
     servers = map(tuple, get_conf('etcd.servers', profile=profile))

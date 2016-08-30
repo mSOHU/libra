@@ -10,7 +10,7 @@ import logging
 
 import zmq
 
-from libra.utils import rr_choice
+from libra.utils import rr_choice, EtcdProfile
 from libra.endpoint import EndpointWatcher
 
 
@@ -21,6 +21,9 @@ class ZmqSocketWatcher(object):
     """etcd-controlled-endpoints dynamic socket
     """
     def __init__(self, service_name, profile, strategy, socket):
+        """
+        :type profile: EtcdProfile
+        """
         self.service_name = service_name
         self.profile = profile
         self.strategy = strategy

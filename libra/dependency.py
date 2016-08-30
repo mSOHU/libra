@@ -11,6 +11,7 @@ import functools
 from collections import defaultdict
 
 from libra.watcher import Watcher
+from libra.utils import EtcdProfile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,10 @@ class DependencyManager(object):
     """
     SERVICES_PATH = '/static-services'
 
-    def __init__(self, profile=None):
+    def __init__(self, profile):
+        """
+        :type profile: EtcdProfile
+        """
         self.profile = profile
         self.statuses = defaultdict(lambda: 'unknown')
         self.watcher = Watcher(

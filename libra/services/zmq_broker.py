@@ -12,7 +12,7 @@ import logging
 import zmq
 
 from libra.watcher import Watcher
-from libra.utils import utf8, local_ip
+from libra.utils import utf8, local_ip, EtcdProfile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,6 +23,9 @@ class ZmqBroker(object):
     INSTANCES = {}
 
     def __init__(self, profile):
+        """
+        :type profile: EtcdProfile
+        """
         self.profile = profile
         self.watcher = Watcher(
             self.LEADER_PATH,
@@ -68,6 +71,7 @@ class ZmqBroker(object):
     @classmethod
     def get_instance(cls, profile):
         """
+        :type profile: EtcdProfile
         :rtype: ZmqBroker
         """
         instance = cls.INSTANCES.get(profile)
