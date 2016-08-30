@@ -3,13 +3,13 @@
 """ 负载测试脚本
 
 """
-import random
 import time
-from libra.manager import AveragePointVisit, WeightNodes
+import random
+
+from libra.manager import WeightNodes
 
 
-class Server():
-
+class Server(object):
     def __init__(self, name, p=0.05):
         """
         Args:
@@ -53,24 +53,12 @@ def main():
         Server('D', 0.2): 20,
         Server('E', 0.3): 20,
     }
-
     TableManger = WeightNodes(TableServer)
 
     node = TableManger.get_node()
     TableManger.release_node(node, time_cost=1)
     TableManger.dead_node(node,time_cost=2)
-    pass
-
-
-
-
-
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
