@@ -28,7 +28,7 @@ watcher = Watcher(
 
 if __name__ == '__main__':
     init_logging(standalone=True)
-    etcd = get_etcd()
+    etcd = get_etcd(profile='product')
     watcher.loop_forever()
     while True:
         time.sleep(2)

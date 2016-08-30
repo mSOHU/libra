@@ -6,7 +6,7 @@
 @date: 3/15/2016 5:02 PM
 """
 
-from libra.listener import listen
+from libra.services.zmq_listener import listen
 from libra.utils import init_logging
 
 
