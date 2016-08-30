@@ -25,11 +25,12 @@ class ConsistentStatsdClient(object):
         'statsd+tcp': statsd.TCPStatsClient,
     }
 
-    def __init__(self, service_name):
+    def __init__(self, service_name, profile):
         """
         Args:
             weight_table: 字典类型，权重对应表
         """
+        self.profile = profile
         self.endpoint_ring = None
         self.clients = {}
         self._ready = threading.Event()
@@ -38,6 +39,7 @@ class ConsistentStatsdClient(object):
         self.service_name = service_name
         self.watcher = EndpointWatcher(
             service_name=service_name,
+            profile=self.profile,
             strategy='all',
             switch_callback=self._switch_endpoint,
         )
