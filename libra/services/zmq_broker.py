@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ZmqBroker(object):
-    LEADER_PATH = '/services/zmq/leader'
+    LEADER_PATH = '/services/zmq:broker/leader'
     INSTANCES = {}
 
     def __init__(self, profile):
