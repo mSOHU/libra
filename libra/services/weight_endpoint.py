@@ -27,7 +27,7 @@ class WeightEndpoints(BaseManager):
     COST_HISTORY_COUNT = 100
     MAX_STEP = 2 ** 32
 
-    def __init__(self, service_name, recovery_num=1000, **weight_kwargs):
+    def __init__(self, service_name, profile, recovery_num=1000, **weight_kwargs):
         """
         Args:
             weight_table: 字典类型，权重对应表
@@ -44,9 +44,11 @@ class WeightEndpoints(BaseManager):
 
         # dynamic service
         self.service_name = service_name
+        self.profile = profile
         self.weight_kwargs = weight_kwargs
         self.watcher = EndpointWatcher(
-            service_name=service_name,
+            service_name=self.service_name,
+            profile=self.service_name,
             strategy='all',
             switch_callback=self._switch_endpoint,
         )
