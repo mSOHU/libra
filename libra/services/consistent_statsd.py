@@ -38,7 +38,7 @@ class ConsistentStatsdClient(object):
         # dynamic service
         self.service_name = service_name
         self.watcher = EndpointWatcher(
-            service_name=service_name,
+            service_name=self.service_name,
             profile=self.profile,
             strategy='all',
             switch_callback=self._switch_endpoint,
