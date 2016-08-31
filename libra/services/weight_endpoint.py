@@ -14,8 +14,8 @@ from collections import deque, defaultdict
 
 from libra.weight import calc_weight
 from libra.manager import BaseManager
-from libra.endpoint import EndpointWatcher
-from libra.utils import local_ip, extract_netloc
+from libra.endpoint import EndpointWatcher, SwitchStrategy
+from libra.utils import local_ip, extract_netloc, EtcdProfile
 
 
 logger = logging.getLogger(__name__)
@@ -27,10 +27,11 @@ class WeightEndpoints(BaseManager):
     COST_HISTORY_COUNT = 100
     MAX_STEP = 2 ** 32
 
-    def __init__(self, service_name, profile, recovery_num=1000, **weight_kwargs):
+    def __init__(
+            self, service_name, profile, recovery_num=1000, **weight_kwargs):
         """
-        Args:
-            weight_table: 字典类型，权重对应表
+            :param weight_table: 字典类型，权重对应表
+            :type profile: EtcdProfile
         """
         self._step = 0
         self._weight_node = {}
@@ -49,7 +50,7 @@ class WeightEndpoints(BaseManager):
         self.watcher = EndpointWatcher(
             service_name=self.service_name,
             profile=self.profile,
-            strategy='all',
+            strategy=SwitchStrategy.ANY,
             switch_callback=self._switch_endpoint,
         )
 

@@ -13,7 +13,8 @@ import threading
 import statsd
 import hash_ring
 
-from libra.endpoint import EndpointWatcher
+from libra.utils import EtcdProfile
+from libra.endpoint import EndpointWatcher, SwitchStrategy
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,7 @@ class ConsistentStatsdClient(object):
 
     def __init__(self, service_name, profile):
         """
-        Args:
-            weight_table: 字典类型，权重对应表
+            :type profile: EtcdProfile
         """
         self.profile = profile
         self.endpoint_ring = None
@@ -40,7 +40,7 @@ class ConsistentStatsdClient(object):
         self.watcher = EndpointWatcher(
             service_name=self.service_name,
             profile=self.profile,
-            strategy='all',
+            strategy=SwitchStrategy.ANY,
             switch_callback=self._switch_endpoint,
         )
 

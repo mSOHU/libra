@@ -14,7 +14,8 @@ from collections import defaultdict
 
 import zmq
 
-from libra.services.zmq_socket import ZmqSocketWatcher
+from libra.utils import EtcdProfile
+from libra.services.zmq_socket import ZmqSocketWatcher, SwitchStrategy
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +26,9 @@ class ZmqListener(object):
     SERVICE_NAME = 'zmq:broker'
 
     def __init__(self, profile):
+        """
+        :type profile: EtcdProfile
+        """
         # zmq
         self.context = zmq.Context()
         subscriber = self.subscriber = self.context.socket(zmq.SUB)
@@ -34,7 +38,7 @@ class ZmqListener(object):
         self.watcher = ZmqSocketWatcher(
             service_name=self.SERVICE_NAME,
             profile=self.profile,
-            strategy='choice',
+            strategy=SwitchStrategy.CHOSEN,
             socket=self.subscriber
         )
 

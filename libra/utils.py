@@ -13,6 +13,7 @@ import logging
 import urlparse
 import functools
 
+import enum
 import etcd
 import yaml
 
@@ -21,15 +22,24 @@ PKG_PATH = os.path.join(os.path.dirname(__file__))
 make_pkg_path = functools.partial(os.path.join, PKG_PATH)
 
 
+@enum.unique
+class EtcdProfile(enum.Enum):
+    PRODUCT = 'product'
+    DEVELOP = 'develop'
+
+
 _CONFIGS = {}
 
 
 def load_config(profile):
+    """
+    :type profile: EtcdProfile
+    """
     if profile in _CONFIGS:
         return _CONFIGS[profile]
 
     config = _CONFIGS[profile] = yaml.load(
-        open(make_pkg_path('conf/%s.yaml' % profile), 'rb').read())
+        open(make_pkg_path('conf/%s.yaml' % profile.value), 'rb').read())
     return config
 
 
@@ -43,21 +53,16 @@ def get_conf(name=None, sep='.', conf=None, profile='develop'):
     return _get_conf(name.split(sep), conf) if name else conf
 
 
-_ETCD_CLIENT = None
-
-
 def get_etcd(profile):
     """
+    :type profile: EtcdProfile
     :rtype: etcd.Client
     """
-    global _ETCD_CLIENT
-    if _ETCD_CLIENT is None:
-        servers = map(tuple, get_conf('etcd.servers', profile=profile))
-        random.shuffle(servers)
-        _ETCD_CLIENT = etcd.Client(
-            tuple(servers), **get_conf('etcd.settings', profile=profile)
-        )
-    return _ETCD_CLIENT
+    servers = map(tuple, get_conf('etcd.servers', profile=profile))
+    random.shuffle(servers)
+    return etcd.Client(
+        tuple(servers), **get_conf('etcd.settings', profile=profile)
+    )
 
 
 def init_logging(standalone=False, module_name='libra'):

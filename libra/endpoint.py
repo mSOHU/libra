@@ -9,10 +9,18 @@
 import json
 import logging
 
+import enum
+
 from libra.watcher import Watcher
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+@enum.unique
+class SwitchStrategy(enum.Enum):
+    CHOSEN = 'chosen'  # notice when chosen one being unavailable
+    ANY = 'any'  # any endpoint change
 
 
 class EndpointWatcher(object):
@@ -20,14 +28,14 @@ class EndpointWatcher(object):
 
     def __init__(self, service_name, profile, strategy, switch_callback):
         """
-        :param strategy: 'choice' or 'all', which means should we care
-            choice endpoint change or just the one being chosen
+        :type profile: EtcdProfile
+        :type strategy: SwitchStrategy
         """
         self.service_name = service_name
         self.profile = profile
         self.service_path = self.SERVICE_BASE % service_name
+        assert isinstance(strategy, SwitchStrategy), 'Invalid strategy: %r' % strategy
         self.strategy = strategy
-        assert self.strategy in ('choice', 'all'), 'Invalid strategy: %s' % self.strategy
         self.switch_callback = switch_callback
 
         self.endpoint_list = []
@@ -45,7 +53,7 @@ class EndpointWatcher(object):
         self.endpoint_list = json.loads(value)['endpoints']
         assert None not in self.endpoint_list, 'Invalid endpoint value: None'
 
-        if self.strategy == 'choice':
+        if self.strategy is SwitchStrategy.CHOSEN:
             if self.endpoint not in self.endpoint_list:
                 old_endpoint = self.endpoint
                 self.endpoint = self.switch_callback(
@@ -57,7 +65,7 @@ class EndpointWatcher(object):
                     'Service [%s] endpoint switched [%s] -> [%s].',
                     self.service_name, old_endpoint, self.endpoint
                 )
-        elif self.strategy == 'all':
+        elif self.strategy is SwitchStrategy.ANY:
             if set(self.endpoint_list) != set(old_endpoint_list):
                 self.switch_callback(
                     endpoint_list=self.endpoint_list,

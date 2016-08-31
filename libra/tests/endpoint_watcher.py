@@ -6,11 +6,12 @@
 @date: 3/24/2016 5:40 PM
 """
 
-from libra.endpoint import EndpointWatcher
-from libra.utils import init_logging, rr_choice
+from libra.endpoint import EndpointWatcher, SwitchStrategy
+from libra.utils import init_logging, rr_choice, EtcdProfile
 
 
 init_logging(standalone=True)
+PROFILE = EtcdProfile.DEVELOP
 
 
 def switch_callback(**kwargs):
@@ -19,22 +20,22 @@ def switch_callback(**kwargs):
 
 EndpointWatcher(
     service_name='test',
-    profile='develop',
-    strategy='all',
+    profile=PROFILE,
+    strategy=SwitchStrategy.ANY,
     switch_callback=switch_callback
 )
 
 
-def switch_callback_choice(**kwargs):
+def switch_callback_chosen(**kwargs):
     print kwargs
     return rr_choice(kwargs['endpoint_list'])
 
 
 EndpointWatcher(
     service_name='test',
-    profile='develop',
-    strategy='choice',
-    switch_callback=switch_callback_choice
+    profile=PROFILE,
+    strategy=SwitchStrategy.CHOSEN,
+    switch_callback=switch_callback_chosen
 )
 
 raw_input('')

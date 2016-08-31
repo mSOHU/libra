@@ -9,10 +9,10 @@
 import time
 import random
 
-from libra.utils import init_logging
+from libra.utils import init_logging, EtcdProfile
 from libra.dependency import DependencyManager
 
-PROFILE = 'develop'
+PROFILE = EtcdProfile.DEVELOP
 manager = DependencyManager(profile=PROFILE)
 
 

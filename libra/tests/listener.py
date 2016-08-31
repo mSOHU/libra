@@ -7,12 +7,12 @@
 """
 
 from libra.services.zmq_listener import ZmqListener
-from libra.utils import init_logging
+from libra.utils import init_logging, EtcdProfile
 
 
 init_logging(standalone=True)
 
-listen = ZmqListener(profile='develop').listen
+listen = ZmqListener(profile=EtcdProfile.DEVELOP).listen
 
 
 @listen('A')

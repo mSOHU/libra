@@ -12,7 +12,7 @@ import threading
 
 import etcd
 
-from libra.utils import get_etcd
+from libra.utils import get_etcd, EtcdProfile
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,6 +23,7 @@ class Watcher(object):
             self, watch_path, profile, change_callback,
             init_callback=None, sync_mode=False, final_state=False):
         """
+        :type profile: EtcdProfile
         :param final_state: indicates ignoring the transition process,
                              just jump to the final state
         """
