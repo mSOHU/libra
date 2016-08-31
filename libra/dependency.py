@@ -38,7 +38,7 @@ class DependencyManager(object):
     def test_down():
         return []
     """
-    SERVICES_PATH = '/static-services'
+    SERVICES_PATH = '/service-status'
 
     def __init__(self, profile=None):
         self.profile = profile
