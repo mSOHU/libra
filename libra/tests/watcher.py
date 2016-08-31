@@ -14,14 +14,17 @@ from libra.utils import init_logging, get_etcd
 from libra.watcher import watch
 
 
-@watch('/fragments')
+PROFILE = 'develop'
+
+
+@watch('/fragments', profile=PROFILE)
 def watch_fragments(action, key, value, prev_value, **_):
     print action, key, value, prev_value, _
 
 
 if __name__ == '__main__':
     init_logging(standalone=True)
-    etcd = get_etcd()
+    etcd = get_etcd(profile=PROFILE)
     while True:
         time.sleep(2)
         print time.ctime()

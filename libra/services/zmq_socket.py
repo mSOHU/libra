@@ -20,15 +20,17 @@ LOGGER = logging.getLogger(__name__)
 class ZmqSocketWatcher(object):
     """etcd-controlled-endpoints dynamic socket
     """
-    def __init__(self, service_name, strategy, socket):
+    def __init__(self, service_name, profile, strategy, socket):
         self.service_name = service_name
+        self.profile = profile
         self.strategy = strategy
         self.socket = socket
         self.endpoint = None
         self.endpoint_list = []
 
         self.watcher = EndpointWatcher(
-            service_name=service_name,
+            service_name=self.service_name,
+            profile=self.profile,
             strategy=strategy,
             switch_callback=self.switch_endpoint
         )

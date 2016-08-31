@@ -12,7 +12,8 @@ import random
 from libra.utils import init_logging
 from libra.dependency import DependencyManager
 
-manager = DependencyManager('develop')
+PROFILE = 'develop'
+manager = DependencyManager(profile=PROFILE)
 
 
 @manager.depends('redis.main_read')
@@ -31,4 +32,4 @@ if __name__ == '__main__':
         time.sleep(1)
         print time.ctime(), read_function()
         new_status = 'ready' if random.random() > 0.2 else 'down'
-        manager.set_status('redis.main_read', new_status)
+        manager.set_status('redis.main_read', PROFILE, new_status)

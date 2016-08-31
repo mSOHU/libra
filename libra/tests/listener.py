@@ -6,11 +6,13 @@
 @date: 3/15/2016 5:02 PM
 """
 
-from libra.listener import listen
+from libra.services.zmq_listener import ZmqListener
 from libra.utils import init_logging
 
 
 init_logging(standalone=True)
+
+listen = ZmqListener(profile='develop').listen
 
 
 @listen('A')

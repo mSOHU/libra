@@ -18,12 +18,13 @@ LOGGER = logging.getLogger(__name__)
 class EndpointWatcher(object):
     SERVICE_BASE = '/services/%s/endpoints'
 
-    def __init__(self, service_name, strategy, switch_callback):
+    def __init__(self, service_name, profile, strategy, switch_callback):
         """
         :param strategy: 'choice' or 'all', which means should we care
             choice endpoint change or just the one being chosen
         """
         self.service_name = service_name
+        self.profile = profile
         self.service_path = self.SERVICE_BASE % service_name
         self.strategy = strategy
         assert self.strategy in ('choice', 'all'), 'Invalid strategy: %s' % self.strategy
@@ -34,6 +35,7 @@ class EndpointWatcher(object):
 
         self.watcher = Watcher(
             self.SERVICE_BASE % service_name,
+            profile=self.profile,
             change_callback=self.on_endpoint_change,
             init_callback=self.on_endpoint_init,
         )

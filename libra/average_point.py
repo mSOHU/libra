@@ -1,6 +1,10 @@
 # coding: utf-8
 
-__author__ = 'johnxu'
+"""
+@author: johnxu
+"""
+
+import time
 
 
 class AveragePointException(Exception):
@@ -241,4 +245,3 @@ class AveragePointVisit(object):
         self._points_back[point].append(int(time.time()))
         if len(self._points_back[point]) > self._el:
             del self._points_back[point][0]
-

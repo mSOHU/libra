@@ -17,16 +17,24 @@ import etcd
 import yaml
 
 
-PKG_PATH = ROOT_PATH = os.path.join(os.path.dirname(__file__))
-make_path = functools.partial(os.path.join, ROOT_PATH)
+PKG_PATH = os.path.join(os.path.dirname(__file__))
 make_pkg_path = functools.partial(os.path.join, PKG_PATH)
 
 
-_CONFIG = yaml.load(open(make_pkg_path('conf/config.yaml'), 'rb').read())
+_CONFIGS = {}
 
 
-def get_conf(name=None, sep='.', conf=None):
-    conf = conf or _CONFIG
+def load_config(profile):
+    if profile in _CONFIGS:
+        return _CONFIGS[profile]
+
+    config = _CONFIGS[profile] = yaml.load(
+        open(make_pkg_path('conf/%s.yaml' % profile), 'rb').read())
+    return config
+
+
+def get_conf(name=None, sep='.', conf=None, profile='develop'):
+    conf = conf or load_config(profile)
     if conf is None:
         raise RuntimeError('config not initialized')
 
@@ -38,16 +46,16 @@ def get_conf(name=None, sep='.', conf=None):
 _ETCD_CLIENT = None
 
 
-def get_etcd():
+def get_etcd(profile):
     """
     :rtype: etcd.Client
     """
     global _ETCD_CLIENT
     if _ETCD_CLIENT is None:
-        servers = [(host, port) for host, port in get_conf('etcd.server')]
+        servers = map(tuple, get_conf('etcd.servers', profile=profile))
         random.shuffle(servers)
         _ETCD_CLIENT = etcd.Client(
-            tuple(servers), **get_conf('etcd.settings')
+            tuple(servers), **get_conf('etcd.settings', profile=profile)
         )
     return _ETCD_CLIENT
 
