@@ -48,7 +48,7 @@ class WeightEndpoints(BaseManager):
         self.weight_kwargs = weight_kwargs
         self.watcher = EndpointWatcher(
             service_name=self.service_name,
-            profile=self.service_name,
+            profile=self.profile,
             strategy='all',
             switch_callback=self._switch_endpoint,
         )
