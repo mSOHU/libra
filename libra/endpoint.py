@@ -53,7 +53,7 @@ class EndpointWatcher(object):
         self.endpoint_list = json.loads(value)['endpoints']
         assert None not in self.endpoint_list, 'Invalid endpoint value: None'
 
-        if self.strategy == SwitchStrategy.CHOSEN:
+        if self.strategy is SwitchStrategy.CHOSEN:
             if self.endpoint not in self.endpoint_list:
                 old_endpoint = self.endpoint
                 self.endpoint = self.switch_callback(
@@ -65,7 +65,7 @@ class EndpointWatcher(object):
                     'Service [%s] endpoint switched [%s] -> [%s].',
                     self.service_name, old_endpoint, self.endpoint
                 )
-        elif self.strategy == SwitchStrategy.ANY:
+        elif self.strategy is SwitchStrategy.ANY:
             if set(self.endpoint_list) != set(old_endpoint_list):
                 self.switch_callback(
                     endpoint_list=self.endpoint_list,

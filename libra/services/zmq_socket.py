@@ -40,7 +40,7 @@ class ZmqSocketWatcher(object):
         )
 
     def switch_endpoint(self, old_endpoint_list, endpoint_list, old_endpoint=None, **_):
-        if self.strategy == SwitchStrategy.CHOSEN:
+        if self.strategy is SwitchStrategy.CHOSEN:
             self.endpoint = rr_choice(endpoint_list)
 
             if old_endpoint:
@@ -51,7 +51,7 @@ class ZmqSocketWatcher(object):
 
             self.socket.connect(self.endpoint)
             return self.endpoint
-        elif self.strategy == SwitchStrategy.ANY:
+        elif self.strategy is SwitchStrategy.ANY:
             for old_endpoint in old_endpoint_list:
                 if old_endpoint not in endpoint_list:
                     try:
