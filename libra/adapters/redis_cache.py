@@ -117,7 +117,10 @@ class LibraStrictRedis(redis.StrictRedis):
                 'Endpoint [%s / %s] fails: %r, command: %s',
                 self.service_name, node_uri, err, args[0])
             self.manager.dead_node(node_uri, time_cost=time.time() - start_time)
-            LOGGER.error('Redis %s timeout', node_uri)
+            LOGGER.error('Redis %s failed', node_uri)
+            raise
+        except Exception:
+            self.manager.release_node(node_uri, time_cost=time.time() - start_time)
             raise
         else:
             self.manager.release_node(node_uri, time_cost=time.time() - start_time)
