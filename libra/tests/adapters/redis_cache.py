@@ -17,9 +17,11 @@ client = LibraStrictRedis(
     service_name='redis:main',
     profile=EtcdProfile.DEVELOP,
     recovery_num=1000,
+    socket_timeout=.05,
+    max_retries=3
 )
 
-for i in range(1000):
+for i in range(100):
     print client.zcard('news')
 
 print client.manager.get_node_counter()

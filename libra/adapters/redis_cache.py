@@ -61,9 +61,10 @@ def _patch_del(manager, node):
 
 class LibraStrictRedis(redis.StrictRedis):
     MANAGER_CALLBACKS = redis.StrictRedis.RESPONSE_CALLBACKS
+    DEFAULT_EXC_CLASSES = (redis.ConnectionError, redis.TimeoutError)
 
-    def __init__(self, *args, **kwargs):
-        self.clients = {}
+    def __init__(self, exc_classes=DEFAULT_EXC_CLASSES, max_retries=3, **kwargs):
+
         self.manager = kwargs.pop('manager', None)
         if self.manager is None:
             self.service_name = kwargs.pop('service_name')
@@ -76,14 +77,17 @@ class LibraStrictRedis(redis.StrictRedis):
         else:
             self.service_name = kwargs.pop('service_name', None)
             self.service_name = self.service_name or getattr(self.manager, 'service_name', None)
-        assert not args, 'No args allowed for LibraStrictRedis'
-        self.kwargs = kwargs
+
+        self.clients = {}
+        self.client_kwargs = kwargs
+        self.max_retries = max_retries
+        self.exc_classes = exc_classes
         self.response_callbacks = self.__class__.MANAGER_CALLBACKS.copy()
 
     def get_client(self, node_uri):
         client = self.clients.get(node_uri)
         if not client:
-            client = from_url(node_uri, **self.kwargs)
+            client = from_url(node_uri, **self.client_kwargs)
             self.clients[node_uri] = client
 
             # prepare client
@@ -92,24 +96,32 @@ class LibraStrictRedis(redis.StrictRedis):
         return client
 
     def execute_command(self, *args, **options):
+        failures = 0
+        while True:
+            try:
+                return self._try_execute(*args, **options)
+            except self.exc_classes:
+                failures += 1
+                if failures > self.max_retries:
+                    raise
+
+    def _try_execute(self, *args, **options):
         node_uri = self.manager.get_node()
         client = self.get_client(node_uri)
-        LOGGER.debug('Got endpoint: %s', node_uri)
-
+        logging.debug('Got endpoint: %s', node_uri)
         start_time = time.time()
         try:
             result = client.execute_command(*args, **options)
-        except (redis.ConnectionError, redis.TimeoutError):
+        except self.exc_classes as err:
+            logging.info(
+                'Endpoint [%s / %s] fails: %r, command: %s',
+                self.service_name, node_uri, err, args[0])
             self.manager.dead_node(node_uri, time_cost=time.time() - start_time)
             LOGGER.error('Redis %s timeout', node_uri)
             raise
-        except Exception:
-            self.manager.release_node(node_uri, time_cost=time.time() - start_time)
-            raise
         else:
             self.manager.release_node(node_uri, time_cost=time.time() - start_time)
-
-        return result
+            return result
 
     def pipeline(self, transaction=True, shard_hint=None):
         """
