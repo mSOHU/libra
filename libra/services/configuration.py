@@ -56,7 +56,7 @@ class Configuration(object):
         old_config, new_config = self.current_config, new_spec['spec']
         if old_config is None:
             logger.info(
-                'Config `%s` loaded: \n%s',
+                u'Config `%s` loaded: \n%s',
                 self.config_name, pprint.pformat(new_config))
             self.ready_event.set()
         else:
@@ -115,7 +115,7 @@ class Configuration(object):
             for event_name, diffs in diff_texts.items()
         ])
         logger.warning(
-            'Config `%s` changed: \n%s',
+            u'Config `%s` changed: \n%s',
             self.config_name, result_text)
 
     def __getitem__(self, item):
