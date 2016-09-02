@@ -25,7 +25,7 @@ class Configuration(object):
     CONFIG_PATH = '/config/%s/spec'
     LEVEL_SEP = '.'
     ALLOWED_SPEC = 'v1'
-    DIFF_PATTERN = re.compile(r"\['?([^'\]]+)'?\]")
+    Undefined = []
 
     def __init__(self, config_name, profile):
         """
@@ -45,60 +45,74 @@ class Configuration(object):
         self.current_config = None
 
     def _on_config_change(self, value, **_):
-        new_config = json.loads(value)
-        assert 'version' in new_config and \
-               new_config['version'] == self.ALLOWED_SPEC, 'unacceptable version'
-        assert 'spec' in new_config and \
-               isinstance(new_config['spec'], dict), 'invalid spec'
+        new_spec = json.loads(value)
+        assert 'version' in new_spec and \
+               new_spec['version'] == self.ALLOWED_SPEC, 'unacceptable version'
+        assert 'spec' in new_spec and \
+               isinstance(new_spec['spec'], dict), 'invalid spec'
 
-        self.log_different(self.current_config, new_config['spec'])
-        self.current_config = new_config['spec']
-        self.ready_event.set()
+        old_config, new_config = self.current_config, new_spec['spec']
+        if old_config is None:
+            logger.info(
+                'Config `%s` loaded: \n%s',
+                self.config_name, pprint.pformat(new_config))
+            self.ready_event.set()
+        else:
+            diffs = self.locate_differences(old_config or {}, new_config)
+            self.log_different(diffs)
+
+        self.current_config = new_config
 
     def _on_config_init(self, root):
         for node in root.leaves:
             if node.key == self.watch_path:
                 self._on_config_change(value=node.value)
 
-    DIFF_MAP = [
-        ('iterable_item_removed', 'REMOVED'),
-        ('iterable_item_added', 'ADDED'),
-        ('dictionary_item_removed', 'REMOVED'),
-        ('dictionary_item_added', 'ADDED'),
-        ('values_changed', 'CHANGED'),
-    ]
+    DIFF_PATTERN = re.compile(r"\['?([^'\]]+)'?\]")
+    DIFF_MAP = {
+        'dictionary_item_added': 'ADDED',
+        'dictionary_item_removed': 'REMOVED',
+        'iterable_item_added': 'ADDED',
+        'iterable_item_removed': 'REMOVED',
+        'values_changed': 'CHANGED'
+    }
 
-    def log_different(self, old, new):
-        if old is None:
-            logger.info(
-                'Config `%s` loaded: \n%s',
-                self.config_name, pprint.pformat(new))
-            return
+    def locate_differences(self, old, new):
+        result = []
 
-        diff_texts = []
-        differences = deepdiff.DeepDiff(old, new, verbose_level=2)
-        for typ, name in self.DIFF_MAP:
-            diff = differences.get(typ, {})
-            if not diff:
-                continue
-
-            type_diff = []
-            diff_texts.append((name, type_diff))
-
-            for location, value in diff.items():
+        for typ_name, diffs in deepdiff.DeepDiff(old, new, verbose_level=2).items():
+            event_name = self.DIFF_MAP[typ_name]
+            for location, value in diffs.items():
                 full_path = '.'.join(self.DIFF_PATTERN.findall(location[4:]))
-                if name == 'ADDED':
-                    old_value, new_value = '', repr(value)
-                elif name == 'REMOVED':
-                    old_value, new_value = repr(value), 'x'
+                if event_name == 'ADDED':
+                    old_value, new_value = self.Undefined, value
+                elif event_name == 'REMOVED':
+                    old_value, new_value = value, self.Undefined
                 else:
-                    old_value, new_value = repr(value['old_value']), repr(value['new_value'])
+                    old_value, new_value = value['old_value'], value['new_value']
 
-                type_diff.append('\t'.join(['[%s]' % full_path, old_value, '->', new_value]))
+                result.append((event_name, full_path, old_value, new_value))
+
+        return result
+
+    def log_different(self, diffs):
+        diff_texts = []
+        for event_name, full_path, old_value, new_value in sorted(diffs):
+            type_diff = []
+            diff_texts.append((event_name, type_diff))
+
+            if event_name == 'ADDED':
+                old_value, new_value = '', repr(new_value)
+            elif event_name == 'REMOVED':
+                old_value, new_value = repr(old_value), 'x'
+            else:
+                old_value, new_value = repr(old_value), repr(new_value)
+
+            type_diff.append('\t'.join(['[%s]' % full_path, old_value, '->', new_value]))
 
         result_text = ''.join([
-            '%s:\n\t%s\n' % (name, '\n\t'.join(diffs))
-            for name, diffs in diff_texts
+            '%s:\n\t%s\n' % (event_name, '\n\t'.join(diffs))
+            for event_name, diffs in diff_texts
         ])
         logger.warning(
             'Config `%s` changed: \n%s',
