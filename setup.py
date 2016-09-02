@@ -33,6 +33,7 @@ setup(
     extras_require={
         'http2': ['http2>=0.2.4'],
         'zmq': ['pyzmq==15.2.0'],
+        'config': ['deepdiff=2.5.1'],
         'consistent_statsd': ['hash_ring==1.3.1', 'statsd==3.2.1'],
     },
 )
