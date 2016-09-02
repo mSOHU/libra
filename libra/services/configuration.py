@@ -11,6 +11,7 @@ import json
 import pprint
 import logging
 import threading
+from collections import defaultdict
 
 import deepdiff
 
@@ -43,6 +44,7 @@ class Configuration(object):
         )
         self.ready_event = threading.Event()
         self.current_config = None
+        self.value_cache = {}
 
     def _on_config_change(self, value, **_):
         new_spec = json.loads(value)
@@ -60,6 +62,7 @@ class Configuration(object):
         else:
             diffs = self.locate_differences(old_config or {}, new_config)
             self.log_different(diffs)
+            self._update_value_cache(diffs)
 
         self.current_config = new_config
 
@@ -96,11 +99,8 @@ class Configuration(object):
         return result
 
     def log_different(self, diffs):
-        diff_texts = []
+        diff_texts = defaultdict(list)
         for event_name, full_path, old_value, new_value in sorted(diffs):
-            type_diff = []
-            diff_texts.append((event_name, type_diff))
-
             if event_name == 'ADDED':
                 old_value, new_value = '', repr(new_value)
             elif event_name == 'REMOVED':
@@ -108,11 +108,11 @@ class Configuration(object):
             else:
                 old_value, new_value = repr(old_value), repr(new_value)
 
-            type_diff.append('\t'.join(['[%s]' % full_path, old_value, '->', new_value]))
+            diff_texts[event_name].append('\t'.join(['[%s]' % full_path, old_value, '->', new_value]))
 
         result_text = ''.join([
             '%s:\n\t%s\n' % (event_name, '\n\t'.join(diffs))
-            for event_name, diffs in diff_texts
+            for event_name, diffs in diff_texts.items()
         ])
         logger.warning(
             'Config `%s` changed: \n%s',
@@ -120,9 +120,22 @@ class Configuration(object):
 
     def __getitem__(self, item):
         self.ready_event.wait()
-        return get_conf(
+
+        if item in self.value_cache:
+            return self.value_cache[item]
+
+        value = self.value_cache[item] = get_conf(
             name=item, sep=self.LEVEL_SEP,
             conf=self.current_config)
+        return value
+
+    def _update_value_cache(self, diffs):
+        for event_name, full_path, old_value, new_value in diffs:
+            if full_path in self.value_cache:
+                if event_name == 'REMOVED':
+                    del self.value_cache[full_path]
+                else:
+                    self.value_cache[full_path] = new_value
 
     def __setitem__(self, key, value):
         raise NotImplementedError()
