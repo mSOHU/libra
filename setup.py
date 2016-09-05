@@ -31,6 +31,7 @@ setup(
         'enum34>=1.1.6',
     ],
     extras_require={
+        'redis': ['redis>=2.10.3'],
         'http2': ['http2>=0.2.4'],
         'zmq': ['pyzmq==15.2.0'],
         'consistent_statsd': ['hash_ring==1.3.1', 'statsd==3.2.1'],
