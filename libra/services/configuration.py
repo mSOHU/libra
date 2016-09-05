@@ -130,12 +130,15 @@ class Configuration(object):
         return value
 
     def _update_value_cache(self, diffs):
-        for event_name, full_path, old_value, new_value in diffs:
-            if full_path in self.value_cache:
-                if event_name == 'REMOVED':
-                    del self.value_cache[full_path]
-                else:
-                    self.value_cache[full_path] = new_value
+        for event_name, event_path, old_value, new_value in diffs:
+            if event_name == 'CHANGED':
+                if event_path in self.value_cache:
+                    self.value_cache[event_path] = new_value
+            elif event_name == 'REMOVED':
+                event_path_prefix = '%s.' % event_path
+                for item_path in self.value_cache.keys():
+                    if item_path == event_path or item_path.startswith(event_path_prefix):
+                        del self.value_cache[item_path]
 
     def __setitem__(self, key, value):
         raise NotImplementedError()
