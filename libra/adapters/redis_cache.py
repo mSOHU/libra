@@ -13,38 +13,11 @@ import urlparse
 import redis
 import redis.client
 
-from libra.utils import EtcdProfile
+from libra.utils import EtcdProfile, to_bool
 from libra.services.weight_endpoint import WeightEndpoints
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-def from_url(url, klass=redis.StrictRedis, **kwargs):
-    to_bool = lambda s: s in ('true', 'True', '1')
-    type_conversion = {
-        'socket_timeout': float,
-        'socket_connect_timeout': float,
-        'socket_keepalive': to_bool,
-        'retry_on_timeout': to_bool,
-        'decode_responses': to_bool,
-        'socket_read_size': int,
-        'max_connections': int,
-    }
-    parts = urlparse.urlparse(url)
-    if parts.query:
-        query_args = urlparse.parse_qsl(parts.query)
-        for key, value in query_args:
-            if key in type_conversion:
-                fn = type_conversion[key]
-                value = fn(value)
-
-            kwargs[key] = value
-
-    # remove query string
-    parts = [parts.scheme, parts.netloc, parts.path, parts.params, '', parts.fragment]
-    url = urlparse.urlunparse(parts)
-    return klass.from_url(url, **kwargs)
 
 
 def _patch_del(manager, node):
@@ -54,7 +27,8 @@ def _patch_del(manager, node):
         except Exception:
             pass
         finally:
-            manager.release_node(node)
+            # time cost is meaningless here
+            manager.release_node(node, time_cost=0)
 
     return __wrap
 
@@ -63,8 +37,34 @@ class LibraStrictRedis(redis.StrictRedis):
     MANAGER_CALLBACKS = redis.StrictRedis.RESPONSE_CALLBACKS
     DEFAULT_EXC_CLASSES = (redis.ConnectionError, redis.TimeoutError)
 
-    def __init__(self, exc_classes=DEFAULT_EXC_CLASSES, max_retries=3, **kwargs):
+    URL_TYPE_CONVERTER = {
+        'socket_timeout': float,
+        'socket_connect_timeout': float,
+        'socket_keepalive': to_bool,
+        'retry_on_timeout': to_bool,
+        'decode_responses': to_bool,
+        'socket_read_size': int,
+        'max_connections': int,
+    }
 
+    @classmethod
+    def from_url(cls, url, klass=redis.StrictRedis, **kwargs):
+        parts = urlparse.urlparse(url)
+        if parts.query:
+            query_args = urlparse.parse_qsl(parts.query)
+            for key, value in query_args:
+                if key in cls.URL_TYPE_CONVERTER:
+                    fn = cls.URL_TYPE_CONVERTER[key]
+                    value = fn(value)
+
+                kwargs[key] = value
+
+        # remove query string
+        parts = [parts.scheme, parts.netloc, parts.path, parts.params, '', parts.fragment]
+        url = urlparse.urlunparse(parts)
+        return klass.from_url(url, **kwargs)
+
+    def __init__(self, exc_classes=DEFAULT_EXC_CLASSES, max_retries=3, **kwargs):
         self.manager = kwargs.pop('manager', None)
         if self.manager is None:
             self.service_name = kwargs.pop('service_name')
@@ -87,7 +87,7 @@ class LibraStrictRedis(redis.StrictRedis):
     def get_client(self, node_uri):
         client = self.clients.get(node_uri)
         if not client:
-            client = from_url(node_uri, **self.client_kwargs)
+            client = self.from_url(node_uri, **self.client_kwargs)
             self.clients[node_uri] = client
 
             # prepare client
@@ -108,12 +108,12 @@ class LibraStrictRedis(redis.StrictRedis):
     def _try_execute(self, *args, **options):
         node_uri = self.manager.get_node()
         client = self.get_client(node_uri)
-        logging.debug('Got endpoint: %s', node_uri)
+        LOGGER.debug('Got endpoint: %s', node_uri)
         start_time = time.time()
         try:
             result = client.execute_command(*args, **options)
         except self.exc_classes as err:
-            logging.info(
+            LOGGER.info(
                 'Endpoint [%s / %s] fails: %r, command: %s',
                 self.service_name, node_uri, err, args[0])
             self.manager.dead_node(node_uri, time_cost=time.time() - start_time)

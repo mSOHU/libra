@@ -135,3 +135,6 @@ def extract_netloc(url, without_port=False):
         return netloc.rsplit(':', 1)[0]
 
     return netloc
+
+
+to_bool = lambda s: s in ('true', 'True', '1')
