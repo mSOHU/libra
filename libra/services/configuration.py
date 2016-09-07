@@ -166,7 +166,12 @@ class Configuration(object):
         for watch_path, funcs in self.watch_functions.items():
             for fn in funcs:
                 try:
-                    fn(event_name='INIT', old_value=Undefined, new_value=self[watch_path])
+                    new_value = self[watch_path]
+                except KeyError:
+                    new_value = Undefined
+
+                try:
+                    fn(event_name='INIT', old_value=Undefined, new_value=new_value)
                 except Exception as err:
                     logger.exception(
                         '%r, while invoking init config watcher: [%s] %r',
