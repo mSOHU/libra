@@ -43,7 +43,10 @@ def load_config(profile):
     return config
 
 
-def get_conf(name=None, sep='.', conf=None, profile='develop'):
+def get_conf(name=None, sep='.', conf=None, profile=EtcdProfile.DEVELOP):
+    """
+    :type profile: EtcdProfile
+    """
     conf = conf or load_config(profile)
     if conf is None:
         raise RuntimeError('config not initialized')
