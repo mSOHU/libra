@@ -15,8 +15,8 @@ from collections import defaultdict
 
 import deepdiff
 
-from libra.utils import get_conf, EtcdProfile
 from libra.watcher import Watcher
+from libra.utils import get_conf, EtcdProfile, Undefined
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,6 @@ class Configuration(object):
     CONFIG_PATH = '/config/%s/spec'
     LEVEL_SEP = '.'
     ALLOWED_SPEC = 'v1'
-    Undefined = []
 
     def __init__(self, config_name, profile):
         """
@@ -44,6 +43,7 @@ class Configuration(object):
         )
         self.ready_event = threading.Event()
         self.current_config = None
+        self.watch_functions = defaultdict(list)
         self.value_cache = {}
 
     def _on_config_change(self, value, **_):
@@ -58,13 +58,15 @@ class Configuration(object):
             logger.info(
                 u'Config `%s` loaded: \n%s',
                 self.config_name, pprint.pformat(new_config))
+            self.current_config = new_config
             self.ready_event.set()
+            self._dispatch_init_watchers()
         else:
             diffs = self.locate_differences(old_config or {}, new_config)
-            self.log_different(diffs)
             self._update_value_cache(diffs)
-
-        self.current_config = new_config
+            self.current_config = new_config
+            self._dispatch_watchers(diffs)
+            self.log_different(diffs)
 
     def _on_config_init(self, root):
         for node in root.leaves:
@@ -88,9 +90,9 @@ class Configuration(object):
             for location, value in diffs.items():
                 full_path = '.'.join(self.DIFF_PATTERN.findall(location[4:]))
                 if event_name == 'ADDED':
-                    old_value, new_value = self.Undefined, value
+                    old_value, new_value = Undefined, value
                 elif event_name == 'REMOVED':
-                    old_value, new_value = value, self.Undefined
+                    old_value, new_value = value, Undefined
                 else:
                     old_value, new_value = value['old_value'], value['new_value']
 
@@ -144,6 +146,35 @@ class Configuration(object):
                     self.value_cache[event_path] = new_value
                 elif event_name == 'REMOVED':
                     del self.value_cache[event_path]
+
+    def watch(self, leaf_path):
+        """ONLY support leaf nodes
+        """
+        def _wrapper(fn):
+            self.watch_functions[leaf_path].append(fn)
+            return fn
+        return _wrapper
+
+    def _dispatch_init_watchers(self):
+        for watch_path, funcs in self.watch_functions.items():
+            for fn in funcs:
+                try:
+                    fn(event_name='INIT', old_value=Undefined, new_value=self[watch_path])
+                except Exception as err:
+                    logger.exception(
+                        '%r, while invoking init config watcher: [%s] %r',
+                        err, watch_path, fn)
+
+    def _dispatch_watchers(self, diffs):
+        for event_name, full_path, old_value, new_value in diffs:
+            for path, funcs in self.watch_functions.items():
+                for fn in funcs:
+                    if full_path == path:
+                        try:
+                            fn(event_name=event_name, old_value=old_value, new_value=new_value)
+                        except Exception as err:
+                            logger.exception(
+                                '%r, while invoking config watcher: %r', err, fn)
 
     def __setitem__(self, key, value):
         raise NotImplementedError()
