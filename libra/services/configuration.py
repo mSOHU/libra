@@ -63,10 +63,11 @@ class Configuration(object):
             self._dispatch_init_watchers()
         else:
             diffs = self.locate_differences(old_config or {}, new_config)
-            self._update_value_cache(diffs)
-            self.current_config = new_config
-            self._dispatch_watchers(diffs)
-            self.log_different(diffs)
+            if diffs:
+                self._update_value_cache(diffs)
+                self.current_config = new_config
+                self._dispatch_watchers(diffs)
+                self.log_different(diffs)
 
     def _on_config_init(self, root):
         for node in root.leaves:
