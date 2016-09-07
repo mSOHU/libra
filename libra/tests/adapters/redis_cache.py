@@ -25,3 +25,5 @@ for i in range(100):
     print client.zcard('news')
 
 print client.manager.get_node_counter()
+
+print client
