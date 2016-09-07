@@ -126,6 +126,17 @@ class LibraStrictRedis(redis.StrictRedis):
             self.manager.release_node(node_uri, time_cost=time.time() - start_time)
             return result
 
+    def __repr__(self):
+        return "%s{<%s>, %d clients%s%s%s}" % (
+            type(self).__name__,
+            self.service_name or 'unknown',
+            len(self.clients),
+            '\n\t' * bool(self.clients),
+            '\n\t'.join([
+                repr(client.connection_pool)
+                for client in self.clients.values()
+            ]), '\n' * bool(self.clients))
+
     def pipeline(self, transaction=True, shard_hint=None):
         """
         Return a new pipeline object that can queue multiple commands for
