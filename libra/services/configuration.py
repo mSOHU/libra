@@ -141,6 +141,12 @@ class Configuration(object):
                 if item_path.startswith(event_path_prefix):
                     del self.value_cache[item_path]
 
+            paths = event_path.split(self.LEVEL_SEP)
+            for i in range(len(paths)):
+                level_path = self.LEVEL_SEP.join(paths[:i])
+                if level_path in self.value_cache:
+                    del self.value_cache[level_path]
+
             if event_path in self.value_cache:
                 if event_name == 'CHANGED':
                     self.value_cache[event_path] = new_value
