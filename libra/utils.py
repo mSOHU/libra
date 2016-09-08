@@ -43,7 +43,10 @@ def load_config(profile):
     return config
 
 
-def get_conf(name=None, sep='.', conf=None, profile='develop'):
+def get_conf(name=None, sep='.', conf=None, profile=EtcdProfile.DEVELOP):
+    """
+    :type profile: EtcdProfile
+    """
     conf = conf or load_config(profile)
     if conf is None:
         raise RuntimeError('config not initialized')
@@ -138,3 +141,24 @@ def extract_netloc(url, without_port=False):
 
 
 to_bool = lambda s: s in ('true', 'True', '1')
+
+
+class _Undefined(object):
+    __instance__ = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls.__instance__ is None:
+            cls.__instance__ = super(_Undefined, cls).__new__(cls, *args)
+        return cls.__instance__
+
+    def __repr__(self):
+        return '<Undefined>'
+
+    __str__ = __repr__
+
+    def __len__(self):
+        raise NotImplementedError()
+
+    __cmp__ = __len__
+
+Undefined = _Undefined()

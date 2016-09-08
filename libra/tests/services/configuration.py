@@ -17,6 +17,13 @@ PROFILE = EtcdProfile.DEVELOP
 
 config = Configuration('wcms_front', profile=EtcdProfile.DEVELOP)
 
+
+@config.watch('CACHE_SERVERS.coop')
+def test_watch(event_name, old_value, new_value):
+    print locals()
+
+
 while True:
     time.sleep(1)
     print config['CACHE_SERVERS.coop']
+    print config['CACHE_SERVERS']
