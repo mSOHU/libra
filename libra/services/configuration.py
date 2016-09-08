@@ -154,11 +154,9 @@ class Configuration(object):
                 elif event_name == 'REMOVED':
                     del self.value_cache[event_path]
 
-    def watch(self, leaf_path):
-        """ONLY support leaf nodes
-        """
+    def watch(self, watch_path):
         def _wrapper(fn):
-            self.watch_functions[leaf_path].append(fn)
+            self.watch_functions[watch_path].append(fn)
             return fn
         return _wrapper
 
@@ -178,15 +176,30 @@ class Configuration(object):
                         err, watch_path, fn)
 
     def _dispatch_watchers(self, diffs):
-        for event_name, full_path, old_value, new_value in diffs:
-            for path, funcs in self.watch_functions.items():
-                for fn in funcs:
-                    if full_path == path:
+        triggered_paths = set()
+        for event_name, event_path, old_value, new_value in diffs:
+            for watch_path, funcs in self.watch_functions.items():
+                # don't trigger multiple times
+                if watch_path in triggered_paths:
+                    continue
+
+                watch_prefix = '%s.' % watch_path
+                if event_path == watch_path or event_path.startswith(watch_prefix):
+                    triggered_paths.add(watch_path)
+
+                    # if only a prefixed path, try to obtain the value on watched path
+                    if watch_path != event_path:
                         try:
-                            fn(event_name=event_name, old_value=old_value, new_value=new_value)
+                            new_value = self[watch_path]
+                        except KeyError:
+                            new_value = Undefined
+
+                    for watcher_fn in funcs:
+                        try:
+                            watcher_fn(event_name=event_name, old_value=old_value, new_value=new_value)
                         except Exception as err:
                             logger.exception(
-                                '%r, while invoking config watcher: %r', err, fn)
+                                '%r, while invoking config watcher: %r', err, watcher_fn)
 
     def __setitem__(self, key, value):
         raise NotImplementedError()
