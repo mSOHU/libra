@@ -7,11 +7,13 @@
 """
 
 import os
+import sys
 import random
 import socket
 import logging
 import urlparse
 import functools
+import threading
 
 import enum
 import etcd
@@ -162,3 +164,15 @@ class _Undefined(object):
     __cmp__ = __len__
 
 Undefined = _Undefined()
+
+
+def patch_rlock(ignore_win32=True):
+    """patch threading's RLock for python<3.2,
+    prevent deadlock during operation in signal handlers
+    @see: http://10.11.161.29:8080/projects/SRE/issues/SRE-56?filter=allopenissues
+    """
+    if sys.platform == 'win32' and ignore_win32:
+        return
+
+    import cthreading
+    threading.RLock = cthreading.RLock
