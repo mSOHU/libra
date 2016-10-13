@@ -176,3 +176,8 @@ def patch_rlock(ignore_win32=True):
 
     import cthreading
     threading.RLock = cthreading.RLock
+
+    # patch loaded `logging._lock` as well
+    logging_mod = sys.modules.get('logging')
+    if logging_mod:
+        logging._lock = cthreading.RLock()
