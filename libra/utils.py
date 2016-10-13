@@ -10,7 +10,6 @@ import os
 import sys
 import random
 import socket
-import logging
 import urlparse
 import functools
 import threading
@@ -71,6 +70,8 @@ def get_etcd(profile):
 
 
 def init_logging(standalone=False, module_name='libra'):
+    import logging
+
     if standalone:
         formatter = logging.Formatter(
             '[%(levelname)1.1s %(asctime)s %(module)s:%(lineno)d] %(message)s',
@@ -176,3 +177,8 @@ def patch_rlock(ignore_win32=True):
 
     import cthreading
     threading.RLock = cthreading.RLock
+
+    # patch loaded `logging._lock` as well
+    logging_mod = sys.modules.get('logging')
+    if logging_mod:
+        logging_mod._lock = cthreading.RLock()
