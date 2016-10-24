@@ -167,12 +167,12 @@ class _Undefined(object):
 Undefined = _Undefined()
 
 
-def patch_rlock(ignore_win32=True):
+def patch_rlock():
     """patch threading's RLock for python<3.2,
     prevent deadlock during operation in signal handlers
     @see: http://10.11.161.29:8080/projects/SRE/issues/SRE-56?filter=allopenissues
     """
-    if sys.platform == 'win32' and ignore_win32:
+    if sys.platform != 'linux2':
         return
 
     import cthreading
