@@ -1,4 +1,4 @@
 # coding: utf-8
 
 __author__ = 'sohume,weizhengxu'
-__version__ = '0.6.6'
+__version__ = '0.6.7'
