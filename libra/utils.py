@@ -137,6 +137,10 @@ def extract_netloc(url, without_port=False):
     if ':' not in url:
         return url
     netloc = urlparse.urlparse(url).netloc
+
+    if '@' in netloc:
+        netloc = netloc.rsplit('@', 1)[1]
+
     if without_port and ':' in netloc:
         return netloc.rsplit(':', 1)[0]
 
