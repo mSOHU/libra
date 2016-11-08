@@ -98,6 +98,10 @@ class DependencyManager(object):
         if type(func).__name__ == 'lru_cached_property' and hasattr(func, 'func'):
             func = func.func
 
+        # handler property
+        if type(func).__name__ == 'property' and hasattr(func, 'fget'):
+            func = func.fget
+
         return func.downgrade
 
     def init_statuses(self, root):
