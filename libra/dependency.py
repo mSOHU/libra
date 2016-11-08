@@ -94,8 +94,8 @@ class DependencyManager(object):
         if type(func).__name__ == 'LRUCachedFunction' and hasattr(func, 'function'):
             func = func.function
 
-        # handle lru_cached_property
-        if type(func).__name__ == 'lru_cached_property' and hasattr(func, 'func'):
+        # handle cached_property
+        if type(func).__name__ == 'cached_property' and hasattr(func, 'func'):
             func = func.func
 
         # handler property
