@@ -10,13 +10,13 @@ import os
 import sys
 import random
 import socket
-import urlparse
 import functools
 import threading
 
 import enum
 import etcd
 import yaml
+from uritools import urisplit
 
 
 PKG_PATH = os.path.join(os.path.dirname(__file__))
@@ -136,7 +136,7 @@ def extract_netloc(url, without_port=False):
     # Scheme should be presented in url. if not, origin url will be returned.
     if ':' not in url:
         return url
-    netloc = urlparse.urlparse(url).netloc
+    netloc = urisplit(url).authority
 
     if '@' in netloc:
         netloc = netloc.rsplit('@', 1)[1]
