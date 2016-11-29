@@ -60,28 +60,30 @@ class ZmqListener(object):
                 LOGGER.exception('%r, while listening events.', err)
                 # avoid potential dead loop
                 time.sleep(1)
-            else:
-                for callback, json_decode in self.callbacks[routing_key]:
-                    try:
-                        headers = json.loads(headers)
+                continue
 
-                        if json_decode:
-                            contents = json.loads(contents)
-                    except (TypeError, ValueError) as err:
-                        LOGGER.exception(
-                            'Exception %r while decoding message: %r, %r, %s',
-                            err, routing_key, headers, contents
-                        )
-                    else:
-                        try:
-                            callback(routing_key=routing_key, headers=headers, payload=contents)
-                        except Exception as err:
-                            LOGGER.exception(
-                                'Exception %r while invoking callback %s:%r',
-                                err, routing_key, callback
-                            )
+            try:
+                headers = json.loads(headers)
+                contents = json.loads(contents)
+            except (TypeError, ValueError) as err:
+                LOGGER.exception(
+                    'Exception %r while decoding message: %r, %r, %s',
+                    err, routing_key, headers, contents
+                )
+                # avoid potential dead loop
+                time.sleep(1)
+                continue
 
-    def listen(self, routing_keys, json_decode=False):
+            for callback in self.callbacks[routing_key]:
+                try:
+                    callback(routing_key=routing_key, headers=headers, payload=contents)
+                except Exception as err:
+                    LOGGER.exception(
+                        'Exception %r while invoking callback %s:%r',
+                        err, routing_key, callback
+                    )
+
+    def listen(self, routing_keys):
         # only str is acceptable
         if isinstance(routing_keys, str):
             routing_keys = [routing_keys]
@@ -94,6 +96,6 @@ class ZmqListener(object):
                 if routing_key not in self.callbacks:
                     self.subscriber.setsockopt(zmq.SUBSCRIBE, routing_key)
 
-                self.callbacks[routing_key].append((fn, json_decode))
+                self.callbacks[routing_key].append(fn)
 
         return decorator
