@@ -16,7 +16,7 @@ import threading
 import enum
 import etcd
 import yaml
-from uritools import urisplit
+import uritools
 
 
 PKG_PATH = os.path.join(os.path.dirname(__file__))
@@ -136,7 +136,7 @@ def extract_netloc(url, without_port=False):
     # Scheme should be presented in url. if not, origin url will be returned.
     if ':' not in url:
         return url
-    netloc = urisplit(url).authority
+    netloc = uritools.urisplit(url).authority
 
     if '@' in netloc:
         netloc = netloc.rsplit('@', 1)[1]

@@ -11,7 +11,7 @@ import logging
 
 import redis
 import redis.client
-from uritools import urisplit, uricompose
+import uritools
 
 from libra.utils import EtcdProfile, to_bool
 from libra.services.weight_endpoint import WeightEndpoints
@@ -49,7 +49,7 @@ class LibraStrictRedis(redis.StrictRedis):
 
     @classmethod
     def from_url(cls, url, klass=redis.StrictRedis, **kwargs):
-        parts = urisplit(url)
+        parts = uritools.urisplit(url)
         if parts.query:
             query_args = parts.getquerylist()
             for key, value in query_args:
@@ -60,11 +60,10 @@ class LibraStrictRedis(redis.StrictRedis):
                 kwargs[key] = value
 
         # remove query string
-        parts = {
-            'scheme': parts.scheme, 'authority': parts.authority,
-            'path': parts.path, 'fragment': parts.fragment
-        }
-        url = uricompose(**parts)
+        url = uritools.uricompose(
+            scheme=parts.scheme, authority=parts.authority,
+            path=parts.path, query='', fragment=parts.fragment,
+        )
         return klass.from_url(url, **kwargs)
 
     def __init__(self, exc_classes=DEFAULT_EXC_CLASSES, max_retries=3, **kwargs):

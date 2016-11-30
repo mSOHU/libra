@@ -11,7 +11,7 @@ import threading
 
 import statsd
 import hash_ring
-from uritools import urisplit
+import uritools
 
 from libra.utils import EtcdProfile
 from libra.endpoint import EndpointWatcher, SwitchStrategy
@@ -54,7 +54,7 @@ class ConsistentStatsdClient(object):
             'ipv6': to_bool,
         }
 
-        parts = urisplit(url)
+        parts = uritools.urisplit(url)
         conn_kwargs = dict(host=parts.authority, port=parts.port)
         if parts.query:
             query_args = parts.getquerylist()
