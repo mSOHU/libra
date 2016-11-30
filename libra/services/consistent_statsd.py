@@ -7,11 +7,11 @@
 """
 
 import logging
-import urlparse
 import threading
 
 import statsd
 import hash_ring
+import uritools
 
 from libra.utils import EtcdProfile
 from libra.endpoint import EndpointWatcher, SwitchStrategy
@@ -54,10 +54,10 @@ class ConsistentStatsdClient(object):
             'ipv6': to_bool,
         }
 
-        parts = urlparse.urlparse(url)
-        conn_kwargs = dict(host=parts.netloc, port=parts.port)
+        parts = uritools.urisplit(url)
+        conn_kwargs = dict(host=parts.authority, port=parts.port)
         if parts.query:
-            query_args = urlparse.parse_qsl(parts.query)
+            query_args = parts.getquerylist()
             for key, value in query_args:
                 if key in type_conversion:
                     fn = type_conversion[key]

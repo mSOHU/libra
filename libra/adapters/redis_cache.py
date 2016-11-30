@@ -8,10 +8,10 @@
 
 import time
 import logging
-import urlparse
 
 import redis
 import redis.client
+import uritools
 
 from libra.utils import EtcdProfile, to_bool
 from libra.services.weight_endpoint import WeightEndpoints
@@ -49,9 +49,9 @@ class LibraStrictRedis(redis.StrictRedis):
 
     @classmethod
     def from_url(cls, url, klass=redis.StrictRedis, **kwargs):
-        parts = urlparse.urlparse(url)
+        parts = uritools.urisplit(url)
         if parts.query:
-            query_args = urlparse.parse_qsl(parts.query)
+            query_args = parts.getquerylist()
             for key, value in query_args:
                 if key in cls.URL_TYPE_CONVERTER:
                     fn = cls.URL_TYPE_CONVERTER[key]
@@ -60,8 +60,10 @@ class LibraStrictRedis(redis.StrictRedis):
                 kwargs[key] = value
 
         # remove query string
-        parts = [parts.scheme, parts.netloc, parts.path, parts.params, '', parts.fragment]
-        url = urlparse.urlunparse(parts)
+        url = uritools.uricompose(
+            scheme=parts.scheme, authority=parts.authority,
+            path=parts.path, query='', fragment=parts.fragment,
+        )
         return klass.from_url(url, **kwargs)
 
     def __init__(self, exc_classes=DEFAULT_EXC_CLASSES, max_retries=3, **kwargs):

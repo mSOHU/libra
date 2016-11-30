@@ -29,6 +29,7 @@ setup(
         'urllib3==1.14.dev1',
         'pyyaml',
         'enum34>=1.1.6',
+        'uritools==2.0.0',
     ],
     extras_require={
         'redis': ['redis>=2.10.3'],
