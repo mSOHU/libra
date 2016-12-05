@@ -55,7 +55,7 @@ class ConsistentStatsdClient(object):
         }
 
         parts = uritools.urisplit(url)
-        conn_kwargs = dict(host=parts.authority, port=parts.port)
+        conn_kwargs = dict(host=parts.host, port=parts.port)
         if parts.query:
             query_args = parts.getquerylist()
             for key, value in query_args:
