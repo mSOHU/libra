@@ -26,7 +26,7 @@ setup(
     },
     install_requires=[
         'python-etcd==0.4.4.dev0',
-        'urllib3==1.14.dev1',
+        'urllib3==1.24.2',
         'pyyaml',
         'enum34>=1.1.6',
         'uritools==2.0.0',
